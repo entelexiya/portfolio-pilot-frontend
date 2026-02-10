@@ -33,7 +33,7 @@ export default function Login() {
         router.push('/dashboard')
       }
     } catch (error: any) {
-      setError(error.message || 'Ошибка входа')
+      setError(error.message || 'Login failed')
     } finally {
       setLoading(false)
     }
@@ -46,7 +46,7 @@ export default function Login() {
           <h1 className="text-5xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             PortfolioPilot
           </h1>
-          <p className="text-slate-600 mt-2 text-lg">Вход в личный кабинет</p>
+          <p className="text-slate-600 mt-2 text-lg">Sign in to your account</p>
         </div>
         
         {error && (
@@ -68,7 +68,7 @@ export default function Login() {
           
           <input 
             type="password" 
-            placeholder="Пароль" 
+            placeholder="Password" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-5 border-2 border-slate-200 rounded-2xl text-lg focus:ring-4 focus:ring-indigo-200/50 focus:border-indigo-500 transition-all shadow-sm"
@@ -81,13 +81,13 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-6 rounded-2xl text-xl font-black shadow-2xl hover:shadow-3xl hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? '⏳ Вход...' : '🚀 Войти'}
+            {loading ? '⏳ Signing in...' : '🚀 Sign In'}
           </button>
         </form>
         
         <div className="text-center mt-8 space-y-2">
           <Link href="/register" className="block text-indigo-600 hover:text-indigo-700 font-bold text-lg hover:underline">
-            Создать аккаунт
+            Create an account
           </Link>
           <p className="text-sm text-slate-500">test@example.com / password123</p>
         </div>

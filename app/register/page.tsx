@@ -15,6 +15,7 @@ export default function Register() {
     email: '',
     password: '',
     school: '',
+    username: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -28,7 +29,7 @@ export default function Register() {
     setSuccess(false)
 
     try {
-      // 1. Регистрация пользователя
+      // 1. Register user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -36,7 +37,7 @@ export default function Register() {
 
       if (authError) throw authError
 
-      // 2. Создание профиля
+      // 2. Create profile
       if (authData.user) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -45,7 +46,9 @@ export default function Register() {
             email: formData.email,
             name: formData.name,
             school: formData.school,
-            region: 'Туркестан',
+            region: 'Turkistan',
+            username: formData.username,
+            is_public: true,
           })
 
         if (profileError) throw profileError
@@ -56,7 +59,7 @@ export default function Register() {
         }, 2000)
       }
     } catch (error: any) {
-      setError(error.message || 'Ошибка регистрации')
+      setError(error.message || 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -69,7 +72,7 @@ export default function Register() {
           <h1 className="text-5xl font-black bg-gradient-to-r from-emerald-600 to-indigo-600 bg-clip-text text-transparent">
             PortfolioPilot
           </h1>
-          <p className="text-slate-600 mt-2 text-lg">Создание аккаунта</p>
+          <p className="text-slate-600 mt-2 text-lg">Create your account</p>
         </div>
 
         {error && (
@@ -80,20 +83,33 @@ export default function Register() {
 
         {success && (
           <div className="mb-6 p-4 bg-green-100 border border-green-300 text-green-700 rounded-2xl text-center">
-            ✅ Регистрация успешна! Перенаправление...
+            ✅ Registration successful! Redirecting...
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <input
             type="text"
-            placeholder="Полное имя"
+            placeholder="Full Name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full p-4 border rounded-2xl text-lg"
             required
             disabled={loading}
           />
+          <input 
+            type="text" 
+            placeholder="Username (for profile link)" 
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+            className="w-full p-4 border rounded-2xl text-lg"
+            required
+            minLength={3}
+            disabled={loading}
+          />
+          <p className="text-sm text-gray-500 -mt-2">
+            Only letters, numbers and _ (e.g., daulet_2025)
+          </p>
           <input
             type="email"
             placeholder="Email"
@@ -105,7 +121,7 @@ export default function Register() {
           />
           <input
             type="password"
-            placeholder="Пароль (минимум 6 символов)"
+            placeholder="Password (minimum 6 characters)"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             className="w-full p-4 border rounded-2xl text-lg"
@@ -115,7 +131,7 @@ export default function Register() {
           />
           <input
             type="text"
-            placeholder="Школа"
+            placeholder="School"
             value={formData.school}
             onChange={(e) => setFormData({ ...formData, school: e.target.value })}
             className="w-full p-4 border rounded-2xl text-lg"
@@ -127,13 +143,13 @@ export default function Register() {
             disabled={loading}
             className="w-full bg-gradient-to-r from-emerald-600 to-indigo-600 text-white py-5 rounded-2xl text-xl font-bold disabled:opacity-50"
           >
-            {loading ? '⏳ Создание...' : '✨ Создать'}
+            {loading ? '⏳ Creating...' : '✨ Create Account'}
           </button>
         </form>
 
         <p className="text-center mt-8">
           <Link href="/login" className="text-indigo-600 font-bold hover:underline">
-            Уже есть аккаунт? Войти
+            Already have an account? Sign in
           </Link>
         </p>
       </div>
