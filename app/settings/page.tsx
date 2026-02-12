@@ -24,7 +24,8 @@ export default function Settings() {
     sat_score: '',
     ielts: '',
     toefl: '',
-    github_url: ''
+    github_url: '',
+    about_me: ''
   })
 
   useEffect(() => {
@@ -61,7 +62,8 @@ export default function Settings() {
           sat_score: data.sat_score?.toString() || '',
           ielts: data.ielts?.toString() || '',
           toefl: data.toefl?.toString() || '',
-          github_url: data.github_url || ''
+          github_url: data.github_url || '',
+          about_me: data.about_me || ''
         })
       }
     } catch (error) {
@@ -88,7 +90,8 @@ export default function Settings() {
           sat_score: formData.sat_score ? parseInt(formData.sat_score) : null,
           ielts: formData.ielts ? parseFloat(formData.ielts) : null,
           toefl: formData.toefl ? parseInt(formData.toefl) : null,
-          github_url: formData.github_url || null
+          github_url: formData.github_url || null,
+          about_me: formData.about_me || null
         })
         .eq('id', userId)
 
@@ -212,7 +215,35 @@ export default function Settings() {
             </div>
           </CardContent>
         </Card>
-
+           {/* ABOUT ME */}
+        <Card className="mb-6 border-2 border-pink-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-pink-50 to-purple-50">
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              About Me
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div>
+              <Label htmlFor="about_me">Personal Statement</Label>
+              <p className="text-sm text-gray-500 mt-1 mb-2">
+                Tell us about your interests, goals, and what drives you (200-500 words)
+              </p>
+              <textarea
+                id="about_me"
+                value={formData.about_me || ''}
+                onChange={(e) => setFormData({ ...formData, about_me: e.target.value })}
+                placeholder="I'm passionate about computer science and solving real-world problems through technology..."
+                rows={8}
+                maxLength={2000}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-pink-200 focus:border-pink-500 transition-all resize-none"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                {(formData.about_me || '').length} / 2000 characters
+              </p>
+            </div>
+          </CardContent>
+        </Card>
         {/* ACADEMIC METRICS */}
         <Card className="mb-6 border-2 border-emerald-100 shadow-xl">
           <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50">

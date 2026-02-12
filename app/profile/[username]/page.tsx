@@ -16,6 +16,7 @@ interface Profile {
   ielts?: number
   toefl?: number
   github_url?: string
+  about_me?: string
 }
 
 interface Achievement {
@@ -152,7 +153,18 @@ export default function PublicProfile() {
             <p className="text-lg text-gray-500 mt-2">
               {profile.school} • {profile.region}
             </p>
-
+ {/* ABOUT ME */}
+{profile.about_me && (
+  <div className="mt-6 p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100">
+    <h3 className="text-lg font-black text-gray-800 mb-3 flex items-center gap-2">
+      <span>💭</span>
+      About Me
+    </h3>
+    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+      {profile.about_me}
+    </p>
+  </div>
+)}
             {/* PDF BUTTON */}
             <button
               onClick={() => generateProfilePDF(profile, achievements)}

@@ -11,6 +11,7 @@ interface Profile {
   ielts?: number
   toefl?: number
   github_url?: string
+  about_me?: string
 }
 
 interface Achievement {
@@ -39,6 +40,22 @@ export const generateProfilePDF = (profile: Profile, achievements: Achievement[]
   doc.line(20, 40, 190, 40)
   
   let yPos = 50
+  
+  // About Me section
+  if (profile.about_me) {
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text('About Me', 20, yPos)
+    yPos += 8
+    
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    
+    // Split text into lines to fit page width
+    const aboutLines = doc.splitTextToSize(profile.about_me, 170)
+    doc.text(aboutLines, 20, yPos)
+    yPos += (aboutLines.length * 5) + 10
+  }
   
   // Академические показатели
   if (profile.gpa || profile.sat_score || profile.ielts || profile.toefl) {
