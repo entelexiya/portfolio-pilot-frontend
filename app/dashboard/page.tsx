@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PlusCircle, Edit, Trash2 } from 'lucide-react'
+import { PlusCircle, Edit, Trash2, ShieldCheck, ShieldQuestion, Loader2 } from 'lucide-react'
 import { supabase, getCurrentUser } from '@/lib/supabase-client'
 import { Globe, ArrowRight } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://portfolio-pilot-api.vercel.app"
+
+type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected'
 
 interface Achievement {
   id: string
@@ -20,7 +22,12 @@ interface Achievement {
   type: "olympiad" | "competition" | "award_other" | "project" | "research" | "internship" | "volunteering" | "leadership" | "club" | "activity_other"
   date: string
   file_url?: string
-  verified: boolean
+  verified?: boolean
+  verification_status?: VerificationStatus
+  verified_by?: string | null
+  verified_at?: string | null
+  verifier_comment?: string | null
+  verification_link?: string | null
   created_at: string
   updated_at: string
 }
@@ -51,6 +58,11 @@ export default function Dashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<"awards" | "activities">("activities")
+  const [verificationModal, setVerificationModal] = useState<Achievement | null>(null)
+  const [verifierEmail, setVerifierEmail] = useState('')
+  const [verificationLink, setVerificationLink] = useState('')
+  const [verificationMessage, setVerificationMessage] = useState('')
+  const [verificationSending, setVerificationSending] = useState(false)
   const router = useRouter()
 
   const [formData, setFormData] = useState({
@@ -125,6 +137,11 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setSelectedFile(file)
 }
 
+const getVerificationStatus = (a: Achievement): VerificationStatus => {
+  if (a.verification_status) return a.verification_status
+  return a.verified ? 'verified' : 'unverified'
+}
+
 const fetchAchievements = async (uid: string) => {
   try {
     setLoading(true)
@@ -139,6 +156,48 @@ const fetchAchievements = async (uid: string) => {
     alert("Не удалось загрузить достижения")
   } finally {
     setLoading(false)
+  }
+}
+
+const handleRequestVerification = async () => {
+  if (!verificationModal || !verifierEmail.trim()) {
+    alert('Введите email учителя')
+    return
+  }
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) {
+    alert('Нужно войти в аккаунт')
+    return
+  }
+  setVerificationSending(true)
+  try {
+    const res = await fetch(`${API_URL}/api/verification/request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        achievementId: verificationModal.id,
+        verifierEmail: verifierEmail.trim(),
+        verificationLink: verificationLink.trim() || undefined,
+        message: verificationMessage.trim() || undefined,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Ошибка запроса')
+    }
+    setVerificationModal(null)
+    setVerifierEmail('')
+    setVerificationLink('')
+    setVerificationMessage('')
+    fetchAchievements(userId!)
+    alert('Запрос отправлен. Учитель получит письмо со ссылкой для подтверждения.')
+  } catch (e: any) {
+    alert(e.message || 'Не удалось отправить запрос')
+  } finally {
+    setVerificationSending(false)
   }
 }
 
@@ -595,13 +654,26 @@ return (
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
                       <h3 className="text-2xl font-black text-gray-900 group-hover:text-indigo-600 transition-colors">
                         {achievement.title}
                       </h3>
                       <span className="px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full font-bold text-sm">
                         {typeLabels[achievement.type]}
                       </span>
+                      {getVerificationStatus(achievement) === 'verified' && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-sm">
+                          <ShieldCheck className="w-4 h-4" /> Verified
+                        </span>
+                      )}
+                      {getVerificationStatus(achievement) === 'pending' && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-800 rounded-full font-bold text-sm">
+                          <Loader2 className="w-4 h-4 animate-spin" /> Pending
+                        </span>
+                      )}
+                      {getVerificationStatus(achievement) === 'rejected' && (
+                        <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full font-bold text-sm">Rejected</span>
+                      )}
                     </div>
                     {achievement.description && (
                       <p className="text-gray-600 mb-3 leading-relaxed">
@@ -622,7 +694,22 @@ return (
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex flex-col sm:flex-row gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {(getVerificationStatus(achievement) === 'unverified' || getVerificationStatus(achievement) === 'rejected') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setVerificationModal(achievement)
+                          setVerifierEmail('')
+                          setVerificationLink(achievement.verification_link || '')
+                          setVerificationMessage('')
+                        }}
+                        className="hover:bg-indigo-50 hover:text-indigo-700 border-indigo-200"
+                      >
+                        <ShieldQuestion className="h-4 w-4 mr-1" /> Request verification
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -646,6 +733,62 @@ return (
           ))
         )}
       </div>
+
+      {/* Request verification modal */}
+      {verificationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !verificationSending && setVerificationModal(null)}>
+          <Card className="w-full max-w-md border-2 border-indigo-200 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+              <CardTitle className="text-xl">Request verification</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">Teacher will receive an email with a link to confirm this achievement.</p>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-4">
+              <p className="font-semibold text-gray-700">{verificationModal.title}</p>
+              <div>
+                <Label>Teacher email *</Label>
+                <Input
+                  type="email"
+                  placeholder="teacher@school.edu.kz"
+                  value={verifierEmail}
+                  onChange={e => setVerifierEmail(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Proof link (optional)</Label>
+                <Input
+                  type="url"
+                  placeholder="https://..."
+                  value={verificationLink}
+                  onChange={e => setVerificationLink(e.target.value)}
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">Link to results, diploma, or project (teacher will check it)</p>
+              </div>
+              <div>
+                <Label>Message to teacher (optional)</Label>
+                <textarea
+                  value={verificationMessage}
+                  onChange={e => setVerificationMessage(e.target.value)}
+                  placeholder="e.g. Please confirm my participation"
+                  rows={2}
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl mt-1 text-sm"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  onClick={handleRequestVerification}
+                  disabled={verificationSending}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {verificationSending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : 'Send request'}
+                </Button>
+                <Button variant="outline" onClick={() => setVerificationModal(null)} disabled={verificationSending}>Cancel</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   </div>
 )

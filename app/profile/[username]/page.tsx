@@ -26,7 +26,9 @@ interface Achievement {
   category: string
   type: string
   date: string
-  verified: boolean
+  verified?: boolean
+  verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
+  verifier_comment?: string | null
   file_url?: string
 }
 
@@ -284,15 +286,26 @@ export default function PublicProfile() {
                   {achievement.description && (
                     <p className="text-gray-600 mb-3 text-sm">{achievement.description}</p>
                   )}
-                  <div className="flex items-center justify-between text-sm mb-2">
+                  <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
                     <span className="text-gray-500">{achievement.date}</span>
                     <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full font-bold text-xs">
                       {typeLabels[achievement.type]}
                     </span>
+                    {(achievement.verification_status === 'verified' || achievement.verified) && (
+                      <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs">
+                        ✓ Verified
+                      </span>
+                    )}
                   </div>
+                  {(achievement.verification_status === 'verified' || achievement.verified) && achievement.verifier_comment && (
+                    <div className="mb-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <p className="text-xs font-semibold text-slate-500 mb-1">Verified</p>
+                      <p className="text-sm text-slate-700">{achievement.verifier_comment}</p>
+                    </div>
+                  )}
                   {achievement.file_url && (
-                    
-                     <a href={achievement.file_url}
+                    <a
+                      href={achievement.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
