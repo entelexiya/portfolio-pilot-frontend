@@ -146,9 +146,9 @@ const fetchAchievements = async (uid: string) => {
   try {
     setLoading(true)
     const response = await fetch(`${API_URL}/api/achievements?userId=${uid}`)
-    const data = await response.json()
-    
-    if (data.success) {
+    const text = await response.text()
+    const data = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
+    if (data.success && Array.isArray(data.data)) {
       setAchievements(data.data)
     }
   } catch (error) {
@@ -184,9 +184,14 @@ const handleRequestVerification = async () => {
         message: verificationMessage.trim() || undefined,
       }),
     })
-    const data = await res.json()
+    const text = await res.text()
+    const data = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
     if (!res.ok) {
-      throw new Error(data.error || 'Ошибка запроса')
+      const msg = data.error || (res.status === 404 ? 'Эндпоинт не найден. Задеплоен ли бэкенд с /api/verification/request?' : `Ошибка ${res.status}`)
+      throw new Error(msg)
+    }
+    if (!data.success && !data.verifyUrl) {
+      throw new Error('Сервер вернул пустой ответ. Проверьте NEXT_PUBLIC_API_URL и логи бэкенда.')
     }
     setVerificationModal(null)
     setVerifierEmail('')

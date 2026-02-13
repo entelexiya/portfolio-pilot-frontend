@@ -49,7 +49,8 @@ export default function VerifyPage() {
     }
     try {
       const res = await fetch(`${API_URL}/api/verification/verify?token=${encodeURIComponent(token)}`)
-      const json = await res.json()
+      const text = await res.text()
+      const json = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
       if (!res.ok) {
         setError(json.error || 'Link not found')
         if (res.status === 410) setError('This link has already been used.')
@@ -97,7 +98,8 @@ export default function VerifyPage() {
         },
         body: JSON.stringify({ token, action, comment: comment.trim() || undefined }),
       })
-      const json = await res.json()
+      const text = await res.text()
+      const json = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
       if (!res.ok) throw new Error(json.error || 'Request failed')
       setDone(action === 'approve' ? 'approved' : 'rejected')
     } catch (e: any) {
