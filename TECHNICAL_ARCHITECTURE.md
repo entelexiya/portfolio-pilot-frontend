@@ -53,7 +53,6 @@
                                    └─────────────────────────┘
 ```
 
----
 
 ## User Flow Diagrams
 
@@ -104,7 +103,6 @@ START
 END
 ```
 
----
 
 ### 2. Add Achievement Flow
 
@@ -165,7 +163,6 @@ START (User on Dashboard)
 END
 ```
 
----
 
 ### 3. View Public Profile Flow
 
@@ -220,7 +217,6 @@ START
 END
 ```
 
----
 
 ### 4. PDF Export Flow
 
@@ -292,7 +288,6 @@ START (User on public profile)
 END
 ```
 
----
 
 ## Database Entity-Relationship Diagram
 
@@ -362,7 +357,6 @@ END
 └────────────────────────────────┘
 ```
 
----
 
 ## API Request/Response Flow
 
@@ -406,7 +400,6 @@ END
        ▼                               ▼                               ▼
 ```
 
----
 
 ## File Upload Flow
 
@@ -451,7 +444,6 @@ END
        ▼                      ▼                      ▼
 ```
 
----
 
 ## Authentication Flow
 
@@ -487,7 +479,6 @@ END
        ▼                               ▼
 ```
 
----
 
 ## AI Integration Architecture (Future)
 
@@ -536,7 +527,6 @@ END
 3. **Profile Optimizer** - Analyzes portfolio and suggests improvements
 4. **Analytics** - Predicts admission chances, identifies gaps
 
----
 
 ## Performance & Scalability
 
@@ -568,7 +558,6 @@ Traffic Level          Actions
                        - Horizontal scaling
 ```
 
----
 
 ## Security Considerations
 
@@ -589,7 +578,6 @@ Traffic Level          Actions
 ⚠️ **Content Security Policy** - XSS protection  
 ⚠️ **Regular Backups** - Database snapshots  
 
----
 
 ## Monitoring & Analytics
 
@@ -620,6 +608,5 @@ Traffic Level          Actions
 - Google Analytics (user behavior)
 - Sentry (error tracking - planned)
 
----
 
 This completes the technical architecture documentation.
