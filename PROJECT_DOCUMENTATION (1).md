@@ -1,7 +1,6 @@
 # PortfolioPilot - Project Documentation
 **INFOMATRIX-ASIA AI Hackathon 2026**
 
----
 
 ## 📋 Project Information
 
@@ -11,7 +10,6 @@
 **Live Demo:** https://portfolio-pilot-frontend.vercel.app  
 **Repository:** [GitHub Link]
 
----
 
 ## 1. Executive Summary
 
@@ -41,7 +39,6 @@ PortfolioPilot is a web platform that enables Kazakhstan high school students to
 - 📈 **Growing trend** of international university applications
 - 💰 **Freemium model:** $5/month PRO tier = sustainable revenue
 
----
 
 ## 2. Technical Architecture
 
@@ -154,7 +151,6 @@ updated_at      TIMESTAMP
 | DELETE | `/api/upload?path={path}` | Delete uploaded file | Yes |
 | GET | `/api/profile/[id]` | Get public profile + stats | No |
 
----
 
 ## 3. CRUDL Implementation
 
@@ -236,7 +232,6 @@ As required by INFOMATRIX-ASIA, our project implements full CRUDL operations:
    - Search by name/school/username
    - Sort by recent or achievement count
 
----
 
 ## 4. Core Features
 
@@ -303,7 +298,6 @@ As required by INFOMATRIX-ASIA, our project implements full CRUDL operations:
 - **Included** in PDF export
 - **Essential** for university applications
 
----
 
 ## 5. AI Integration Readiness
 
@@ -401,7 +395,6 @@ const generateEssay = async (profileData) => {
 - Existing About Me text (for refinement)
 - Success Stories dataset (for comparison)
 
----
 
 ## 6. User Interface & Design
 
@@ -475,7 +468,6 @@ const generateEssay = async (profileData) => {
 - **Desktop:** 3-column grid, full navbar
 - **Breakpoints:** sm (640px), md (768px), lg (1024px), xl (1280px)
 
----
 
 ## 7. Business Model & Monetization
 
@@ -524,7 +516,6 @@ const generateEssay = async (profileData) => {
 - **International:** Expanding to Central Asia, then globally
 - **TAM (Total Addressable Market):** 500,000+ students applying to top universities annually
 
----
 
 ## 8. Competitive Analysis
 
@@ -546,7 +537,6 @@ const generateEssay = async (profileData) => {
 4. 🤝 Community to compare with peers
 5. 🚀 Fast setup (2 minutes vs hours)
 
----
 
 ## 9. Implementation Timeline
 
@@ -578,7 +568,6 @@ const generateEssay = async (profileData) => {
 - Admin dashboard
 - Marketing campaign
 
----
 
 ## 10. Security & Privacy
 
@@ -606,7 +595,6 @@ const generateEssay = async (profileData) => {
 - Passwords: hashed with bcrypt (never stored in plain text)
 - Sessions: secure httpOnly cookies
 
----
 
 ## 11. Testing & Quality Assurance
 
@@ -657,7 +645,6 @@ const generateEssay = async (profileData) => {
 - PDF generation: <3 seconds
 - Image upload: <5 seconds
 
----
 
 ## 12. Deployment & DevOps
 
@@ -699,7 +686,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 - Supabase Dashboard: Database metrics
 - Error tracking: Console logs (production: Sentry planned)
 
----
 
 ## 13. Future Roadmap
 
@@ -731,7 +717,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 - 💰 Revenue milestone: $10k MRR
 - 🚀 Series A fundraising
 
----
 
 ## 14. Team & Contact
 
@@ -748,7 +733,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 **Mentor/Advisor:**
 - [Mentor Name] - [Affiliation]
 
----
 
 ## 15. Conclusion
 
@@ -776,9 +760,8 @@ PortfolioPilot addresses a critical need for Kazakhstan students applying to top
 
 We are excited to demonstrate PortfolioPilot at INFOMATRIX-ASIA and showcase how technology can transform the college application process for students worldwide.
 
----
 
 **Thank you for your consideration!**
 
-*PortfolioPilot Team*  
+*WW Team*  
 *February 2026*
