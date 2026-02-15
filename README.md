@@ -7,7 +7,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)](https://supabase.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
 
----
+
 
 ## 🎯 Problem & Solution
 
@@ -15,7 +15,6 @@
 
 **Solution:** PortfolioPilot - A modern web platform to create stunning portfolios optimized for MIT, Stanford, Harvard, and other top universities.
 
----
 
 ## ✨ Key Features
 
@@ -27,7 +26,6 @@
 - ✍️ **Personal Statement** - Write compelling "About Me"
 - 💎 **Freemium Model** - Free to start, $5/month PRO
 
----
 
 ## 🚀 Tech Stack
 
@@ -45,7 +43,6 @@
 - jsPDF (PDF generation)
 - Lucide React (Icons)
 
----
 
 ## 📊 CRUDL Implementation
 
@@ -55,7 +52,6 @@
 ✅ **DELETE** - Remove achievements, delete files  
 ✅ **LIST** - Dashboard achievements, community profiles with filters
 
----
 
 ## 🤖 AI Readiness (Final Stage)
 
@@ -66,7 +62,6 @@ Platform is architected to support:
 - ✨ AI Profile Analytics
 - ✨ AI Chatbot Mentor
 
----
 
 ## 💰 Business Model
 
@@ -84,8 +79,6 @@ Platform is architected to support:
 - AI assistant
 
 **Revenue Projection:** 1,000 users × 5% conversion × $5 = **$250/month**
-
----
 
 ## 📂 Project Structure
 
@@ -107,7 +100,6 @@ portfolio-pilot/
 └── .env.local              # Environment vars
 ```
 
----
 
 ## 🗄️ Database Schema
 
@@ -115,7 +107,6 @@ portfolio-pilot/
 **achievements** - Awards and activities with categories  
 **Storage** - Certificate uploads (JPG, PNG, PDF)
 
----
 
 ## 🌐 Live Demo
 
@@ -129,7 +120,6 @@ portfolio-pilot/
 5. Browse Community feed
 6. Download PDF portfolio
 
----
 
 ## 📸 Screenshots
 
@@ -145,7 +135,6 @@ Stunning shareable portfolio with achievements and metrics
 ### Community Feed
 Browse, search, and filter all public portfolios
 
----
 
 ## 🏆 Competitive Advantages
 
@@ -156,7 +145,6 @@ Browse, search, and filter all public portfolios
 ✅ Fast setup (2 minutes)  
 ✅ Free to start, affordable PRO tier
 
----
 
 ## 📈 Impact & Vision
 
@@ -171,7 +159,6 @@ Browse, search, and filter all public portfolios
 - Expansion to Central Asia
 - AI-powered application assistance
 
----
 
 ## 🛠️ Local Development
 
@@ -188,7 +175,6 @@ npm install
 npm run dev
 ```
 
----
 
 ## 📝 Documentation
 
@@ -203,7 +189,6 @@ Includes:
 - Testing checklist
 - Deployment guide
 
----
 
 ## 👥 Team
 
@@ -212,12 +197,10 @@ INFOMATRIX-ASIA AI Hackathon 2026
 
 Contact: [team@portfoliopilot.com]
 
----
 
 ## 📄 License
 
 This project was created for INFOMATRIX-ASIA AI Hackathon 2026.
 
----
 
 **Built with ❤️ for Kazakhstan students aiming for top universities worldwide**
