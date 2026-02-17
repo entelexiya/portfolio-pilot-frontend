@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -16,7 +16,6 @@ interface Achievement {
   date: string
   type: AchievementType
   file_url?: string
-  verified: boolean
   created_at: string
   updated_at: string
 }
@@ -158,7 +157,7 @@ export default function Profile() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-2xl font-bold text-gray-800">{a.title}</h3>
-                    {a.verified && (
+                    {(a as any).verification_status === 'verified' && (
                       <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">
                         ✓ Проверено
                       </span>
@@ -188,3 +187,5 @@ export default function Profile() {
     </div>
   )
 }
+
+

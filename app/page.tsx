@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import Link from 'next/link'
 import { ArrowRight, Award, Users, FileText, Sparkles, TrendingUp, Globe, Check, Zap, Crown, Star, Rocket, Clock } from 'lucide-react'
 export default function Home() {

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Calendar, MapPin, Users, ArrowRight, Filter, Search, Clock, Tag } from 'lucide-react'

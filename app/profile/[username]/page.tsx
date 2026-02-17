@@ -1,4 +1,4 @@
- 'use client'
+﻿ 'use client'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase-client'
@@ -26,7 +26,6 @@ interface Achievement {
   category: string
   type: string
   date: string
-  verified?: boolean
   verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
   verifier_comment?: string | null
   file_url?: string
@@ -291,13 +290,13 @@ export default function PublicProfile() {
                     <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full font-bold text-xs">
                       {typeLabels[achievement.type]}
                     </span>
-                    {(achievement.verification_status === 'verified' || achievement.verified) && (
+                    {achievement.verification_status === 'verified' && (
                       <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs">
                         ✓ Verified
                       </span>
                     )}
                   </div>
-                  {(achievement.verification_status === 'verified' || achievement.verified) && achievement.verifier_comment && (
+                  {achievement.verification_status === 'verified' && achievement.verifier_comment && (
                     <div className="mb-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
                       <p className="text-xs font-semibold text-slate-500 mb-1">Verified</p>
                       <p className="text-sm text-slate-700">{achievement.verifier_comment}</p>
@@ -332,3 +331,4 @@ export default function PublicProfile() {
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -22,7 +22,6 @@ interface Achievement {
   type: "olympiad" | "competition" | "award_other" | "project" | "research" | "internship" | "volunteering" | "leadership" | "club" | "activity_other"
   date: string
   file_url?: string
-  verified?: boolean
   verification_status?: VerificationStatus
   verified_by?: string | null
   verified_at?: string | null
@@ -139,7 +138,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
 const getVerificationStatus = (a: Achievement): VerificationStatus => {
   if (a.verification_status) return a.verification_status
-  return a.verified ? 'verified' : 'unverified'
+  return 'unverified'
 }
 
 const fetchAchievements = async (uid: string) => {
@@ -798,3 +797,4 @@ return (
   </div>
 )
 }
+
