@@ -33,17 +33,17 @@ interface Achievement {
 
 const typeLabels: Record<string, string> = {
   // Awards
-  olympiad: "🏆 Олимпиада",
-  competition: "🥇 Соревнование",
-  award_other: "⭐ Другая награда",
+  olympiad: "🏆 Olympiad",
+  competition: "🥇 Competition",
+  award_other: "⭐ Other Award",
   // Activities
-  project: "💻 Проект",
+  project: "💻 Project",
   research: "🔬 Research",
-  internship: "💼 Стажировка",
-  volunteering: "👥 Волонтёрство",
-  leadership: "👑 Лидерство",
-  club: "🎯 Клуб",
-  activity_other: "📌 Другая активность"
+  internship: "💼 Internship",
+  volunteering: "👥 Volunteering",
+  leadership: "👑 Leadership",
+  club: "🎯 Club",
+  activity_other: "📌 Other Activity"
 }
 
 export default function Dashboard() {
@@ -72,7 +72,7 @@ export default function Dashboard() {
     date: "",
   })
 
-  // Проверка авторизации и загрузка
+  // Check auth and load initial data
   useEffect(() => {
     checkUser()
   }, [])
@@ -115,10 +115,10 @@ const togglePrivacy = async () => {
     if (error) throw error
 
     setIsPublic(newStatus)
-    alert(newStatus ? 'Профиль теперь публичный' : 'Профиль теперь приватный')
+    alert(newStatus ? 'Profile is now public' : 'Profile is now private')
   } catch (error) {
-    console.error('Ошибка:', error)
-    alert('Не удалось изменить настройки')
+    console.error('Error:', error)
+    alert('Failed to update settings')
   }
 }
 
@@ -128,7 +128,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   if (!file) return
   
   if (file.size > 5 * 1024 * 1024) {
-    alert('Файл слишком большой! Максимум 5МБ')
+    alert('File is too large! Maximum size is 5MB')
     e.target.value = ''
     return
   }
@@ -151,8 +151,8 @@ const fetchAchievements = async (uid: string) => {
       setAchievements(data.data)
     }
   } catch (error) {
-    console.error("Ошибка загрузки достижений:", error)
-    alert("Не удалось загрузить достижения")
+    console.error("Error loading achievements:", error)
+    alert("Failed to load achievements")
   } finally {
     setLoading(false)
   }
@@ -160,12 +160,12 @@ const fetchAchievements = async (uid: string) => {
 
 const handleRequestVerification = async () => {
   if (!verificationModal || !verifierEmail.trim()) {
-    alert('Введите email учителя')
+    alert('Enter teacher email')
     return
   }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) {
-    alert('Нужно войти в аккаунт')
+    alert('You need to sign in')
     return
   }
   setVerificationSending(true)
@@ -186,20 +186,28 @@ const handleRequestVerification = async () => {
     const text = await res.text()
     const data = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
     if (!res.ok) {
-      const msg = data.error || (res.status === 404 ? 'Эндпоинт не найден. Задеплоен ли бэкенд с /api/verification/request?' : `Ошибка ${res.status}`)
+      const msg = data.error || (res.status === 404 ? 'Endpoint not found. Is backend deployed with /api/verification/request?' : `Error ${res.status}`)
       throw new Error(msg)
     }
     if (!data.success && !data.verifyUrl) {
-      throw new Error('Сервер вернул пустой ответ. Проверьте NEXT_PUBLIC_API_URL и логи бэкенда.')
+      throw new Error('Server returned an empty response. Check NEXT_PUBLIC_API_URL and backend logs.')
     }
     setVerificationModal(null)
     setVerifierEmail('')
     setVerificationLink('')
     setVerificationMessage('')
     fetchAchievements(userId!)
-    alert('Запрос отправлен. Учитель получит письмо со ссылкой для подтверждения.')
+    const emailSent = data.emailSent !== false
+    if (!emailSent) {
+      const fallbackLink = data.verifyUrl
+        ? `\n\nManual link to send:\n${data.verifyUrl}`
+        : ''
+      alert(`Request created, but email was not sent: ${data.emailError || 'RESEND is not configured on backend.'}${fallbackLink}`)
+    } else {
+      alert('Request sent. Teacher will receive an email with a verification link.')
+        }
   } catch (e: any) {
-    alert(e.message || 'Не удалось отправить запрос')
+    alert(e.message || 'Failed to send request')
   } finally {
     setVerificationSending(false)
   }
@@ -207,12 +215,12 @@ const handleRequestVerification = async () => {
 
 const handleCreate = async () => {
   if (!formData.title || !formData.type) {
-    alert("Заполните название и тип")
+    alert("Fill in title and type")
     return
   }
 
   if (!userId) {
-    alert("Ошибка: пользователь не авторизован")
+    alert("Error: user is not authorized")
     return
   }
 
@@ -220,7 +228,7 @@ const handleCreate = async () => {
     setUploading(true)
     let fileUrl = null
 
-    // 1. Загружаем файл если есть
+    // 1. Upload file if provided
     if (selectedFile) {
       const formDataUpload = new FormData()
       formDataUpload.append('file', selectedFile)
@@ -236,13 +244,13 @@ const handleCreate = async () => {
       if (uploadData.success) {
         fileUrl = uploadData.data.url
       } else {
-        alert("Ошибка загрузки файла: " + uploadData.error)
+        alert("File upload error: " + uploadData.error)
         setUploading(false)
         return
       }
     }
 
-    // 2. Создаем достижение
+    // 2. Create achievement
     const response = await fetch(`${API_URL}/api/achievements`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -264,13 +272,13 @@ const handleCreate = async () => {
       resetForm()
       setSelectedFile(null)
       setIsAdding(false)
-      alert("Достижение создано!")
+      alert("Achievement created!")
     } else {
-      alert("Ошибка: " + data.error)
+      alert("Error: " + data.error)
     }
   } catch (error) {
-    console.error("Ошибка создания:", error)
-    alert("Не удалось создать достижение")
+    console.error("Creation error:", error)
+    alert("Failed to create achievement")
   } finally {
     setUploading(false)
   }
@@ -300,18 +308,18 @@ const handleUpdate = async () => {
       )
       resetForm()
       setEditingId(null)
-      alert("Достижение обновлено!")
+      alert("Achievement updated!")
     } else {
-      alert("Ошибка: " + data.error)
+      alert("Error: " + data.error)
     }
   } catch (error) {
-    console.error("Ошибка обновления:", error)
-    alert("Не удалось обновить достижение")
+    console.error("Update error:", error)
+    alert("Failed to update achievement")
   }
 }
 
 const handleDelete = async (id: string) => {
-  if (!confirm("Точно удалить это достижение?")) return
+  if (!confirm("Are you sure you want to delete this achievement?")) return
 
   try {
     const response = await fetch(`${API_URL}/api/achievements/${id}`, {
@@ -322,13 +330,13 @@ const handleDelete = async (id: string) => {
 
     if (data.success) {
       setAchievements(achievements.filter((a) => a.id !== id))
-      alert("Достижение удалено")
+      alert("Achievement deleted")
     } else {
-      alert("Ошибка: " + data.error)
+      alert("Error: " + data.error)
     }
   } catch (error) {
-    console.error("Ошибка удаления:", error)
-    alert("Не удалось удалить достижение")
+    console.error("Delete error:", error)
+    alert("Failed to delete achievement")
   }
 }
 
@@ -359,7 +367,7 @@ const resetForm = () => {
   })
 }
 
-// Фильтрация по категориям
+// Filter by category
 const awards = achievements.filter(a => a.category === 'award')
 const activities = achievements.filter(a => a.category === 'activity')
 const displayedAchievements = activeTab === 'awards' ? awards : activities
@@ -367,7 +375,7 @@ const displayedAchievements = activeTab === 'awards' ? awards : activities
  if (loading) {
   return (
     <div className="container mx-auto p-6">
-      <p className="text-center">Загрузка...</p>
+      <p className="text-center">Loading...</p>
     </div>
   )
 }
@@ -797,4 +805,10 @@ return (
   </div>
 )
 }
+
+
+
+
+
+
 

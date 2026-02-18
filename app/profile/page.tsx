@@ -52,7 +52,7 @@ export default function Profile() {
         setAchievements(data.data)
       }
     } catch (error) {
-      console.error("Ошибка загрузки:", error)
+      console.error("Error loading:", error)
     } finally {
       setLoading(false)
     }
@@ -79,16 +79,16 @@ export default function Profile() {
   }
 
   const typeLabel = {
-    olympiad: 'Олимпиада',
-    project: 'Проект',
-    volunteering: 'Волонтерство',
-    other: 'Другое'
+    olympiad: 'Olympiad',
+    project: 'Project',
+    volunteering: 'Volunteering',
+    other: 'Other'
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-emerald-50 flex items-center justify-center">
-        <p className="text-2xl font-bold text-gray-600">Загрузка...</p>
+        <p className="text-2xl font-bold text-gray-600">Loading...</p>
       </div>
     )
   }
@@ -104,21 +104,21 @@ export default function Profile() {
         <div className="text-center mb-16">
           <div className="w-32 h-32 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full mx-auto mb-8 shadow-2xl"></div>
           <h1 className="text-6xl font-black text-gray-800 mb-4">PortfolioPilot</h1>
-          <p className="text-2xl text-gray-600 mb-12">Туркестан • 2026</p>
+          <p className="text-2xl text-gray-600 mb-12">Turkistan • 2026</p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12 max-w-2xl mx-auto">
             <button 
               onClick={() => {
                 const url = window.location.href
                 navigator.clipboard.writeText(url)
-                alert('✅ Ссылка скопирована!')
+                alert('✅ Link copied!')
               }}
               className="flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-12 py-6 rounded-3xl text-xl font-black shadow-2xl hover:shadow-3xl hover:-translate-y-2 transition-all"
             >
-              🔗 Поделиться
+              🔗 Share
             </button>
             <button 
-              onClick={() => alert('PDF экспорт в разработке!')}
+              onClick={() => alert('PDF export is in development!')}
               className="flex items-center gap-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-12 py-6 rounded-3xl text-xl font-black shadow-2xl hover:shadow-3xl hover:-translate-y-2 transition-all"
             >
               📄 PDF
@@ -131,17 +131,17 @@ export default function Profile() {
           <div className="p-8 bg-white/90 backdrop-blur-xl rounded-3xl border shadow-2xl text-center">
             <div className="text-5xl mb-4">🏆</div>
             <div className="text-5xl font-black text-yellow-600">{stats.olympiads}</div>
-            <p className="text-xl font-semibold text-gray-800 mt-2">Олимпиады</p>
+            <p className="text-xl font-semibold text-gray-800 mt-2">Olympiads</p>
           </div>
           <div className="p-8 bg-white/90 backdrop-blur-xl rounded-3xl border shadow-2xl text-center">
             <div className="text-5xl mb-4">💻</div>
             <div className="text-5xl font-black text-indigo-600">{stats.projects}</div>
-            <p className="text-xl font-semibold text-gray-800 mt-2">Проекты</p>
+            <p className="text-xl font-semibold text-gray-800 mt-2">Projects</p>
           </div>
           <div className="p-8 bg-white/90 backdrop-blur-xl rounded-3xl border shadow-2xl text-center">
             <div className="text-5xl mb-4">📊</div>
             <div className="text-5xl font-black text-slate-700">{stats.total}</div>
-            <p className="text-xl font-semibold text-gray-800 mt-2">Всего</p>
+            <p className="text-xl font-semibold text-gray-800 mt-2">Total</p>
           </div>
         </div>
 
@@ -159,7 +159,7 @@ export default function Profile() {
                     <h3 className="text-2xl font-bold text-gray-800">{a.title}</h3>
                     {(a as any).verification_status === 'verified' && (
                       <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">
-                        ✓ Проверено
+                        ✓ Verified
                       </span>
                     )}
                   </div>
@@ -174,10 +174,10 @@ export default function Profile() {
           ) : (
             <div className="text-center py-24">
               <div className="text-8xl mb-8 opacity-30">📭</div>
-              <h3 className="text-3xl font-bold text-gray-500">Пока пусто</h3>
+              <h3 className="text-3xl font-bold text-gray-500">No achievements yet</h3>
               <p className="text-gray-400 mt-4">
                 <Link href="/dashboard" className="text-indigo-600 hover:underline">
-                  Добавить достижение →
+                  Add achievement →
                 </Link>
               </p>
             </div>
@@ -187,5 +187,6 @@ export default function Profile() {
     </div>
   )
 }
+
 
 

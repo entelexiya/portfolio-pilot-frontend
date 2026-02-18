@@ -1,7 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";  // ← добавь импорт
+import Navbar from "@/components/Navbar";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "PortfolioPilot",
-  description: "Твои достижения в одном месте",
+  description: "Your achievements in one place",
 };
 
 export default function RootLayout({
@@ -20,11 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <Navbar />  {/* ← замени весь <nav>...</nav> на это */}
+        <Navbar />
 
-        {/* Контент */}
+        {/* Page content */}
         <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/30">
           {children}
         </main>
@@ -32,3 +32,4 @@ export default function RootLayout({
     </html>
   );
 }
+

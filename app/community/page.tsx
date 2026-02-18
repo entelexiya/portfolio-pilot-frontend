@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase-client'
@@ -46,7 +46,6 @@ export default function CommunityPage() {
     try {
       setLoading(true)
 
-      // Получаем все публичные профили
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -55,7 +54,6 @@ export default function CommunityPage() {
 
       if (profilesError) throw profilesError
 
-      // Для каждого профиля получаем статистику достижений
       const profilesWithStats = await Promise.all(
         (profilesData || []).map(async (profile) => {
           const { data: achievements } = await supabase
@@ -86,7 +84,6 @@ export default function CommunityPage() {
   const applyFilters = () => {
     let filtered = [...profiles]
 
-    // Поиск по имени или школе
     if (searchQuery) {
       filtered = filtered.filter(
         (p) =>
@@ -96,12 +93,10 @@ export default function CommunityPage() {
       )
     }
 
-    // Фильтр по региону
     if (regionFilter !== 'all') {
       filtered = filtered.filter((p) => p.region === regionFilter)
     }
 
-    // Сортировка
     if (sortBy === 'achievements') {
       filtered.sort((a, b) => {
         const aTotal = a.awards_count + a.activities_count
