@@ -1,5 +1,6 @@
 ﻿ 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase-client'
 import { generateProfilePDF } from '@/lib/generatePDF'
@@ -123,14 +124,14 @@ export default function PublicProfile() {
           <div className="text-8xl mb-6">😕</div>
           <h1 className="text-4xl font-black text-gray-800 mb-4">Profile Not Found</h1>
           <p className="text-xl text-gray-600 mb-8">
-            User @{username} doesn't exist or profile is private
+            User @{username} doesn&apos;t exist or profile is private
           </p>
-          <a 
-            href="/" 
+          <Link
+            href="/"
             className="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold"
           >
             Go Home
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -320,12 +321,12 @@ export default function PublicProfile() {
 
         {/* FOOTER */}
         <div className="text-center mt-8">
-          <a 
-            href="/" 
+          <Link
+            href="/"
             className="inline-block text-indigo-600 hover:text-indigo-700 font-bold text-lg"
           >
             ← Create your portfolio on PortfolioPilot
-          </a>
+          </Link>
         </div>
       </div>
     </div>

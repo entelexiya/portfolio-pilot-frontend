@@ -58,8 +58,9 @@ export default function Register() {
           router.push('/dashboard')
         }, 2000)
       }
-    } catch (error: any) {
-      setError(error.message || 'Registration failed')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Registration failed'
+      setError(message)
     } finally {
       setLoading(false)
     }

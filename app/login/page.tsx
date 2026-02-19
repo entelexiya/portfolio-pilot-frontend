@@ -32,8 +32,9 @@ export default function Login() {
       if (data.user) {
         router.push('/dashboard')
       }
-    } catch (error: any) {
-      setError(error.message || 'Login failed')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Login failed'
+      setError(message)
     } finally {
       setLoading(false)
     }

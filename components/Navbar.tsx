@@ -2,18 +2,22 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { supabase, getCurrentUser } from '@/lib/supabase-client'
+import type { User } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase-client'
 import { Home, Users, LayoutDashboard, Settings, Calendar, LogOut, Menu, X } from 'lucide-react'
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    checkUser()
+    void supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null)
+      setLoading(false)
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
@@ -21,12 +25,6 @@ export default function Navbar() {
 
     return () => subscription.unsubscribe()
   }, [])
-
-  const checkUser = async () => {
-    const currentUser = await getCurrentUser()
-    setUser(currentUser)
-    setLoading(false)
-  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

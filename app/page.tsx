@@ -196,7 +196,7 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-xl text-gray-600">Start free. Upgrade when you're ready.</p>
+            <p className="text-xl text-gray-600">Start free. Upgrade when you&apos;re ready.</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">

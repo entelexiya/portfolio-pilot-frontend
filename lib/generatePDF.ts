@@ -24,6 +24,9 @@ interface Achievement {
 
 export const generateProfilePDF = (profile: Profile, achievements: Achievement[]) => {
   const doc = new jsPDF()
+  const autoTableDoc = doc as jsPDF & {
+    lastAutoTable?: { finalY?: number }
+  }
   
   // Заголовок
   doc.setFontSize(24)
@@ -116,7 +119,7 @@ export const generateProfilePDF = (profile: Profile, achievements: Achievement[]
       styles: { fontSize: 9 }
     })
     
-    yPos = (doc as any).lastAutoTable.finalY + 10
+    yPos = (autoTableDoc.lastAutoTable?.finalY ?? yPos) + 10
   }
   
   // Activities
@@ -152,7 +155,7 @@ export const generateProfilePDF = (profile: Profile, achievements: Achievement[]
   }
   
   // Футер
-  const pageCount = (doc as any).internal.getNumberOfPages()
+  const pageCount = doc.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
     doc.setFontSize(8)
