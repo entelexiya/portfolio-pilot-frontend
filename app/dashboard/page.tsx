@@ -64,6 +64,19 @@ export default function Dashboard() {
   const [verificationSending, setVerificationSending] = useState(false)
   const router = useRouter()
 
+  const getAuthHeaders = async (withJson = true) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) throw new Error('You need to sign in')
+
+    return {
+      ...(withJson ? { 'Content-Type': 'application/json' } : {}),
+      Authorization: `Bearer ${token}`,
+    }
+  }
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -144,7 +157,8 @@ const getVerificationStatus = (a: Achievement): VerificationStatus => {
 const fetchAchievements = async (uid: string) => {
   try {
     setLoading(true)
-    const response = await fetch(`${API_URL}/api/achievements?userId=${uid}`)
+    const headers = await getAuthHeaders(false)
+    const response = await fetch(`${API_URL}/api/achievements?userId=${uid}`, { headers })
     const text = await response.text()
     const data = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
     if (data.success && Array.isArray(data.data)) {
@@ -206,8 +220,9 @@ const handleRequestVerification = async () => {
     } else {
       alert('Request sent. Teacher will receive an email with a verification link.')
         }
-  } catch (e: any) {
-    alert(e.message || 'Failed to send request')
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Failed to send request'
+    alert(message)
   } finally {
     setVerificationSending(false)
   }
@@ -233,9 +248,11 @@ const handleCreate = async () => {
       const formDataUpload = new FormData()
       formDataUpload.append('file', selectedFile)
       formDataUpload.append('userId', userId)
+      const uploadHeaders = await getAuthHeaders(false)
 
       const uploadResponse = await fetch(`${API_URL}/api/upload`, {
         method: "POST",
+        headers: uploadHeaders,
         body: formDataUpload,
       })
 
@@ -253,7 +270,7 @@ const handleCreate = async () => {
     // 2. Create achievement
     const response = await fetch(`${API_URL}/api/achievements`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: await getAuthHeaders(),
       body: JSON.stringify({
         user_id: userId,
         title: formData.title,
@@ -290,7 +307,7 @@ const handleUpdate = async () => {
   try {
     const response = await fetch(`${API_URL}/api/achievements/${editingId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: await getAuthHeaders(),
       body: JSON.stringify({
         title: formData.title,
         description: formData.description,
@@ -324,6 +341,7 @@ const handleDelete = async (id: string) => {
   try {
     const response = await fetch(`${API_URL}/api/achievements/${id}`, {
       method: "DELETE",
+      headers: await getAuthHeaders(false),
     })
 
     const data = await response.json()

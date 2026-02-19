@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { getCurrentUser } from '@/lib/supabase-client'
+import { getCurrentUser, supabase } from '@/lib/supabase-client'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://portfolio-pilot-api.vercel.app";
 
@@ -16,6 +16,7 @@ interface Achievement {
   date: string
   type: AchievementType
   file_url?: string
+  verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
   created_at: string
   updated_at: string
 }
@@ -45,7 +46,14 @@ export default function Profile() {
   const fetchAchievements = async (uid: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_URL}/api/achievements?userId=${uid}`)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        router.push('/login')
+        return
+      }
+      const response = await fetch(`${API_URL}/api/achievements?userId=${uid}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      })
       const data = await response.json()
       
       if (data.success) {
@@ -157,7 +165,7 @@ export default function Profile() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-2xl font-bold text-gray-800">{a.title}</h3>
-                    {(a as any).verification_status === 'verified' && (
+                    {a.verification_status === 'verified' && (
                       <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-bold">
                         ✓ Verified
                       </span>
