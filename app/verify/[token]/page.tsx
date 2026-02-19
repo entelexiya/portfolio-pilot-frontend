@@ -57,8 +57,8 @@ export default function VerifyPage() {
         setLoading(false)
         return
       }
-      setData(json)
-    } catch (e) {
+      setData((json.data ?? json) as VerifyData)
+    } catch {
       setError('Failed to load')
     }
 
@@ -78,8 +78,9 @@ export default function VerifyPage() {
       })
       if (err) throw err
       setLinkSent(true)
-    } catch (e: any) {
-      alert(e.message || 'Failed to send link')
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to send link'
+      alert(message)
     } finally {
       setSendingLink(false)
     }
@@ -102,8 +103,9 @@ export default function VerifyPage() {
       const json = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
       if (!res.ok) throw new Error(json.error || 'Request failed')
       setDone(action === 'approve' ? 'approved' : 'rejected')
-    } catch (e: any) {
-      alert(e.message || 'Something went wrong')
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Something went wrong'
+      alert(message)
     } finally {
       setActionLoading(false)
     }
