@@ -27,6 +27,13 @@ export const generateProfilePDF = (profile: Profile, achievements: Achievement[]
   const autoTableDoc = doc as jsPDF & {
     lastAutoTable?: { finalY?: number }
   }
+  const pageDoc = doc as jsPDF & {
+    getNumberOfPages?: () => number
+    internal?: {
+      getNumberOfPages?: () => number
+      pages?: unknown[]
+    }
+  }
   
   // Заголовок
   doc.setFontSize(24)
@@ -155,7 +162,10 @@ export const generateProfilePDF = (profile: Profile, achievements: Achievement[]
   }
   
   // Футер
-  const pageCount = doc.getNumberOfPages()
+  const pageCount =
+    pageDoc.getNumberOfPages?.() ??
+    pageDoc.internal?.getNumberOfPages?.() ??
+    Math.max(1, (pageDoc.internal?.pages?.length || 1) - 1)
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
     doc.setFontSize(8)
