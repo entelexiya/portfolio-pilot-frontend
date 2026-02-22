@@ -1,5 +1,5 @@
-﻿'use client'
-import { useEffect, useState } from 'react'
+'use client'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -62,9 +62,10 @@ export default function Dashboard() {
   const [verificationLink, setVerificationLink] = useState('')
   const [verificationMessage, setVerificationMessage] = useState('')
   const [verificationSending, setVerificationSending] = useState(false)
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const router = useRouter()
 
-  const getAuthHeaders = async (withJson = true) => {
+  const getAuthHeaders = useCallback(async (withJson = true) => {
     const {
       data: { session },
     } = await supabase.auth.getSession()
@@ -75,7 +76,7 @@ export default function Dashboard() {
       ...(withJson ? { 'Content-Type': 'application/json' } : {}),
       Authorization: `Bearer ${token}`,
     }
-  }
+  }, [])
 
   const [formData, setFormData] = useState({
     title: "",
@@ -85,12 +86,25 @@ export default function Dashboard() {
     date: "",
   })
 
-  // Check auth and load initial data
-  useEffect(() => {
-    checkUser()
-  }, [])
+const fetchAchievements = useCallback(async (uid: string) => {
+  try {
+    setLoading(true)
+    const headers = await getAuthHeaders(false)
+    const response = await fetch(`${API_URL}/api/achievements?userId=${uid}`, { headers })
+    const text = await response.text()
+    const data = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
+    if (data.success && Array.isArray(data.data)) {
+      setAchievements(data.data)
+    }
+  } catch (error) {
+    console.error("Error loading achievements:", error)
+    setNotice({ type: 'error', message: 'Failed to load achievements.' })
+  } finally {
+    setLoading(false)
+  }
+}, [getAuthHeaders])
 
- const checkUser = async () => {
+const checkUser = useCallback(async () => {
   const user = await getCurrentUser()
   
   if (!user) {
@@ -111,8 +125,13 @@ export default function Dashboard() {
     setIsPublic(profile.is_public ?? true)
   }
   
-  fetchAchievements(user.id)
-}
+  await fetchAchievements(user.id)
+}, [fetchAchievements, router])
+
+  // Check auth and load initial data
+  useEffect(() => {
+    void checkUser()
+  }, [checkUser])
 
 const togglePrivacy = async () => {
   if (!userId) return
@@ -128,10 +147,13 @@ const togglePrivacy = async () => {
     if (error) throw error
 
     setIsPublic(newStatus)
-    alert(newStatus ? 'Profile is now public' : 'Profile is now private')
+    setNotice({
+      type: 'success',
+      message: newStatus ? 'Profile is now public.' : 'Profile is now private.',
+    })
   } catch (error) {
     console.error('Error:', error)
-    alert('Failed to update settings')
+    setNotice({ type: 'error', message: 'Failed to update settings.' })
   }
 }
 
@@ -141,7 +163,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   if (!file) return
   
   if (file.size > 5 * 1024 * 1024) {
-    alert('File is too large! Maximum size is 5MB')
+    setNotice({ type: 'error', message: 'File is too large. Maximum size is 5MB.' })
     e.target.value = ''
     return
   }
@@ -154,32 +176,14 @@ const getVerificationStatus = (a: Achievement): VerificationStatus => {
   return 'unverified'
 }
 
-const fetchAchievements = async (uid: string) => {
-  try {
-    setLoading(true)
-    const headers = await getAuthHeaders(false)
-    const response = await fetch(`${API_URL}/api/achievements?userId=${uid}`, { headers })
-    const text = await response.text()
-    const data = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
-    if (data.success && Array.isArray(data.data)) {
-      setAchievements(data.data)
-    }
-  } catch (error) {
-    console.error("Error loading achievements:", error)
-    alert("Failed to load achievements")
-  } finally {
-    setLoading(false)
-  }
-}
-
 const handleRequestVerification = async () => {
   if (!verificationModal || !verifierEmail.trim()) {
-    alert('Enter teacher email')
+    setNotice({ type: 'error', message: 'Enter teacher email.' })
     return
   }
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) {
-    alert('You need to sign in')
+    setNotice({ type: 'error', message: 'You need to sign in.' })
     return
   }
   setVerificationSending(true)
@@ -216,13 +220,21 @@ const handleRequestVerification = async () => {
       const fallbackLink = data.verifyUrl
         ? `\n\nManual link to send:\n${data.verifyUrl}`
         : ''
-      alert(`Request created, but email was not sent: ${data.emailError || 'RESEND is not configured on backend.'}${fallbackLink}`)
+      setNotice({
+        type: 'error',
+        message: `Request created, but email was not sent: ${
+          data.emailError || 'RESEND is not configured on backend.'
+        }${fallbackLink}`,
+      })
     } else {
-      alert('Request sent. Teacher will receive an email with a verification link.')
-        }
+      setNotice({
+        type: 'success',
+        message: 'Request sent. Teacher will receive an email with a verification link.',
+      })
+    }
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to send request'
-    alert(message)
+    setNotice({ type: 'error', message })
   } finally {
     setVerificationSending(false)
   }
@@ -230,12 +242,12 @@ const handleRequestVerification = async () => {
 
 const handleCreate = async () => {
   if (!formData.title || !formData.type) {
-    alert("Fill in title and type")
+    setNotice({ type: 'error', message: 'Fill in title and type.' })
     return
   }
 
   if (!userId) {
-    alert("Error: user is not authorized")
+    setNotice({ type: 'error', message: 'Error: user is not authorized.' })
     return
   }
 
@@ -261,7 +273,7 @@ const handleCreate = async () => {
       if (uploadData.success) {
         fileUrl = uploadData.data.url
       } else {
-        alert("File upload error: " + uploadData.error)
+        setNotice({ type: 'error', message: `File upload error: ${uploadData.error}` })
         setUploading(false)
         return
       }
@@ -289,13 +301,13 @@ const handleCreate = async () => {
       resetForm()
       setSelectedFile(null)
       setIsAdding(false)
-      alert("Achievement created!")
+      setNotice({ type: 'success', message: 'Achievement created.' })
     } else {
-      alert("Error: " + data.error)
+      setNotice({ type: 'error', message: `Error: ${data.error}` })
     }
   } catch (error) {
     console.error("Creation error:", error)
-    alert("Failed to create achievement")
+    setNotice({ type: 'error', message: 'Failed to create achievement.' })
   } finally {
     setUploading(false)
   }
@@ -325,13 +337,13 @@ const handleUpdate = async () => {
       )
       resetForm()
       setEditingId(null)
-      alert("Achievement updated!")
+      setNotice({ type: 'success', message: 'Achievement updated.' })
     } else {
-      alert("Error: " + data.error)
+      setNotice({ type: 'error', message: `Error: ${data.error}` })
     }
   } catch (error) {
     console.error("Update error:", error)
-    alert("Failed to update achievement")
+    setNotice({ type: 'error', message: 'Failed to update achievement.' })
   }
 }
 
@@ -348,19 +360,14 @@ const handleDelete = async (id: string) => {
 
     if (data.success) {
       setAchievements(achievements.filter((a) => a.id !== id))
-      alert("Achievement deleted")
+      setNotice({ type: 'success', message: 'Achievement deleted.' })
     } else {
-      alert("Error: " + data.error)
+      setNotice({ type: 'error', message: `Error: ${data.error}` })
     }
   } catch (error) {
     console.error("Delete error:", error)
-    alert("Failed to delete achievement")
+    setNotice({ type: 'error', message: 'Failed to delete achievement.' })
   }
-}
-
-const handleLogout = async () => {
-  await supabase.auth.signOut()
-  router.push('/login')
 }
 
 const startEdit = (achievement: Achievement) => {
@@ -390,17 +397,9 @@ const awards = achievements.filter(a => a.category === 'award')
 const activities = achievements.filter(a => a.category === 'activity')
 const displayedAchievements = activeTab === 'awards' ? awards : activities
 
- if (loading) {
-  return (
-    <div className="container mx-auto p-6">
-      <p className="text-center">Loading...</p>
-    </div>
-  )
-}
-
 if (loading) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
+    <div className="min-h-screen pp-bg flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mx-auto mb-4"></div>
         <p className="text-gray-600 font-semibold">Loading your portfolio...</p>
@@ -410,29 +409,41 @@ if (loading) {
 }
 
 return (
-  <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 px-4">
+  <div className="min-h-screen pp-bg py-8 px-4">
     <div className="container mx-auto max-w-7xl">
       {/* HEADER */}
       <div className="mb-10">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-5xl md:text-6xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+            <h1 className="text-5xl md:text-6xl font-black pp-title-gradient mb-2">
               My Portfolio
             </h1>
             <p className="text-gray-600 text-lg">Manage your awards and activities</p>
           </div>
           <button
             onClick={() => setIsAdding(!isAdding)}
-            className="group inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all"
+            className="group inline-flex items-center gap-2 pp-primary-btn px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all"
           >
             <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform" />
             Add Achievement
           </button>
         </div>
+
+        {notice && (
+          <div
+            className={`mb-6 rounded-2xl border px-4 py-3 text-sm font-semibold ${
+              notice.type === 'success'
+                ? 'border-blue-200 bg-blue-50 text-blue-800'
+                : 'border-red-200 bg-red-50 text-red-700'
+            }`}
+          >
+            {notice.message}
+          </div>
+        )}
         
         {/* PROFILE CARD */}
         {username && (
-          <div className="bg-gradient-to-r from-white/90 via-indigo-50/50 to-purple-50/50 backdrop-blur-xl p-8 rounded-3xl border-2 border-indigo-100 shadow-2xl">
+          <div className="bg-gradient-to-r from-white/90 via-indigo-50/50 to-indigo-50/50 backdrop-blur-xl p-8 rounded-3xl border-2 border-blue-100 shadow-2xl">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
@@ -452,7 +463,7 @@ return (
                   <a 
                     href={`/profile/${username}`}
                     target="_blank"
-                    className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold group"
+                    className="inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-semibold group"
                   >
                     <Globe className="w-4 h-4" />
                     View Public Profile
@@ -469,7 +480,7 @@ return (
                   onChange={togglePrivacy}
                   className="sr-only peer"
                 />
-                <div className="w-16 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-600 peer-checked:to-purple-600 shadow-lg"></div>
+                <div className="w-16 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-8 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-indigo-600 peer-checked:to-indigo-600 shadow-lg"></div>
               </label>
             </div>
           </div>
@@ -479,8 +490,8 @@ return (
       {/* ADD FORM */}
       {isAdding && (
         <div className="mb-8 animate-in slide-in-from-top duration-300">
-          <Card className="border-2 border-indigo-200 shadow-2xl">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+          <Card className="border-2 border-blue-200 shadow-2xl">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
               <CardTitle className="text-2xl font-black">
                 {editingId ? '✏️ Edit Achievement' : '✨ New Achievement'}
               </CardTitle>
@@ -499,7 +510,7 @@ return (
                       type: category === 'award' ? 'olympiad' : 'project'
                     })
                   }}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mt-2 font-semibold focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mt-2 font-semibold focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all"
                 >
                   <option value="award">🏆 Award</option>
                   <option value="activity">📌 Activity</option>
@@ -514,7 +525,7 @@ return (
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value as Achievement["type"] })
                   }
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mt-2 font-semibold focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mt-2 font-semibold focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all"
                 >
                   {formData.category === 'award' ? (
                     <>
@@ -543,7 +554,7 @@ return (
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="e.g., IOI Gold Medal 2025"
-                  className="mt-2 h-12 text-base border-2 focus:ring-4 focus:ring-indigo-200"
+                  className="mt-2 h-12 text-base border-2 focus:ring-4 focus:ring-blue-200"
                 />
               </div>
 
@@ -554,7 +565,7 @@ return (
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="mt-2 h-12 text-base border-2 focus:ring-4 focus:ring-indigo-200"
+                  className="mt-2 h-12 text-base border-2 focus:ring-4 focus:ring-blue-200"
                 />
               </div>
 
@@ -566,7 +577,7 @@ return (
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Tell us about your achievement..."
                   rows={4}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mt-2 focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 transition-all resize-none"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mt-2 focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all resize-none"
                 />
               </div>
 
@@ -577,7 +588,7 @@ return (
                   type="file"
                   accept="image/*,.pdf"
                   onChange={handleFileChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-indigo-700 hover:file:bg-blue-100"
                 />
                 <p className="text-sm text-gray-500 mt-2">
                   Supported: JPG, PNG, PDF (Max 5MB)
@@ -588,7 +599,7 @@ return (
               <div className="flex gap-3 pt-4">
                 <Button
                   onClick={editingId ? handleUpdate : handleCreate}
-                  className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-xl"
+                  className="flex-1 h-14 text-lg font-bold bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 shadow-xl"
                   disabled={uploading}
                 >
                   {uploading ? (
@@ -626,26 +637,26 @@ return (
             onClick={() => setActiveTab('activities')}
             className={`px-8 py-4 font-black text-xl transition-all relative ${
               activeTab === 'activities'
-                ? 'text-indigo-600'
+                ? 'text-blue-700'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             📌 Activities ({activities.length})
             {activeTab === 'activities' && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-full"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-700 to-indigo-700 rounded-t-full"></div>
             )}
           </button>
           <button
             onClick={() => setActiveTab('awards')}
             className={`px-8 py-4 font-black text-xl transition-all relative ${
               activeTab === 'awards'
-                ? 'text-indigo-600'
+                ? 'text-blue-700'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             🏆 Awards ({awards.length})
             {activeTab === 'awards' && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-full"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-700 to-indigo-700 rounded-t-full"></div>
             )}
           </button>
         </div>
@@ -667,7 +678,7 @@ return (
               </p>
               <button
                 onClick={() => setIsAdding(true)}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all"
+                className="inline-flex items-center gap-2 pp-primary-btn px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all"
               >
                 <PlusCircle className="w-5 h-5" />
                 Add Your First {activeTab === 'awards' ? 'Award' : 'Activity'}
@@ -678,21 +689,21 @@ return (
           displayedAchievements.map((achievement, index) => (
             <Card 
               key={achievement.id} 
-              className="group border-2 border-gray-200 hover:border-indigo-300 hover:shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom"
+              className="group border-2 border-gray-200 hover:border-blue-300 hover:shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom"
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-3 mb-3">
-                      <h3 className="text-2xl font-black text-gray-900 group-hover:text-indigo-600 transition-colors">
+                      <h3 className="text-2xl font-black text-gray-900 group-hover:text-blue-700 transition-colors">
                         {achievement.title}
                       </h3>
-                      <span className="px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full font-bold text-sm">
+                      <span className="px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-indigo-700 rounded-full font-bold text-sm">
                         {typeLabels[achievement.type]}
                       </span>
                       {getVerificationStatus(achievement) === 'verified' && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-sm">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-bold text-sm">
                           <ShieldCheck className="w-4 h-4" /> Verified
                         </span>
                       )}
@@ -717,7 +728,7 @@ return (
                         <a  href={achievement.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-semibold group"
+                          className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-800 font-semibold group"
                         >
                           📎 Certificate
                         </a>
@@ -735,7 +746,7 @@ return (
                           setVerificationLink(achievement.verification_link || '')
                           setVerificationMessage('')
                         }}
-                        className="hover:bg-indigo-50 hover:text-indigo-700 border-indigo-200"
+                        className="hover:bg-blue-50 hover:text-blue-800 border-blue-200"
                       >
                         <ShieldQuestion className="h-4 w-4 mr-1" /> Request verification
                       </Button>
@@ -744,7 +755,7 @@ return (
                       variant="ghost"
                       size="icon"
                       onClick={() => startEdit(achievement)}
-                      className="hover:bg-emerald-100 hover:text-emerald-700"
+                      className="hover:bg-blue-100 hover:text-blue-700"
                     >
                       <Edit className="h-5 w-5" />
                     </Button>
@@ -767,8 +778,8 @@ return (
       {/* Request verification modal */}
       {verificationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !verificationSending && setVerificationModal(null)}>
-          <Card className="w-full max-w-md border-2 border-indigo-200 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+          <Card className="w-full max-w-md border-2 border-blue-200 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
               <CardTitle className="text-xl">Request verification</CardTitle>
               <p className="text-sm text-gray-600 mt-1">Teacher will receive an email with a link to confirm this achievement.</p>
             </CardHeader>
@@ -809,7 +820,7 @@ return (
                 <Button
                   onClick={handleRequestVerification}
                   disabled={verificationSending}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                  className="flex-1 bg-blue-700 hover:bg-blue-800"
                 >
                   {verificationSending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : 'Send request'}
                 </Button>
@@ -823,6 +834,7 @@ return (
   </div>
 )
 }
+
 
 
 

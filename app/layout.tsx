@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -25,7 +25,7 @@ export default function RootLayout({
         <Navbar />
 
         {/* Page content */}
-        <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/30">
+        <main className="pp-bg min-h-screen">
           {children}
         </main>
       </body>

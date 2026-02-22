@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Calendar, MapPin, Users, ArrowRight, Filter, Search, Clock, Tag } from 'lucide-react'
@@ -130,12 +130,12 @@ export default function EventsPage() {
   }
 
   const typeColors: Record<string, string> = {
-    olympiad: 'from-yellow-500 to-orange-500',
-    competition: 'from-orange-500 to-red-500',
-    project: 'from-indigo-500 to-purple-500',
-    volunteering: 'from-emerald-500 to-teal-500',
-    workshop: 'from-blue-500 to-cyan-500',
-    hackathon: 'from-pink-500 to-rose-500'
+    olympiad: 'from-blue-500 to-indigo-500',
+    competition: 'from-indigo-500 to-red-500',
+    project: 'from-indigo-500 to-indigo-500',
+    volunteering: 'from-blue-500 to-indigo-500',
+    workshop: 'from-blue-500 to-blue-500',
+    hackathon: 'from-blue-500 to-rose-500'
   }
 
   const filteredEvents = events.filter(event => {
@@ -149,24 +149,24 @@ export default function EventsPage() {
   const sortedEvents = filteredEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
+    <div className="min-h-screen pp-bg py-12 px-4">
       <div className="container mx-auto max-w-7xl">
         {/* HEADER */}
         <div className="mb-10">
           <Link 
             href="/"
-            className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-semibold mb-6 transition-colors"
           >
             <ArrowRight className="w-5 h-5 rotate-180" />
             Back to Home
           </Link>
           
           <div className="flex items-center gap-4 mb-6">
-            <div className="p-3 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl">
+            <div className="p-3 bg-gradient-to-br from-blue-700 to-indigo-700 rounded-2xl">
               <Calendar className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-5xl md:text-6xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <h1 className="text-5xl md:text-6xl font-black pp-title-gradient">
                 Events & Opportunities
               </h1>
               <p className="text-gray-600 text-lg mt-2">
@@ -177,7 +177,7 @@ export default function EventsPage() {
         </div>
 
         {/* FILTERS */}
-        <Card className="mb-8 border-2 border-indigo-200 shadow-xl">
+        <Card className="mb-8 border-2 border-blue-200 shadow-xl">
           <CardContent className="pt-6">
             <div className="grid md:grid-cols-2 gap-4">
               {/* Search */}
@@ -187,7 +187,7 @@ export default function EventsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search events by title, tags..."
-                  className="pl-10 h-12 text-base border-2 focus:ring-4 focus:ring-indigo-200"
+                  className="pl-10 h-12 text-base border-2 focus:ring-4 focus:ring-blue-200"
                 />
               </div>
 
@@ -197,7 +197,7 @@ export default function EventsPage() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full pl-10 h-12 px-4 text-base border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 appearance-none bg-white"
+                  className="w-full pl-10 h-12 px-4 text-base border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-200 focus:border-blue-500 appearance-none bg-white"
                 >
                   <option value="all">All Types</option>
                   <option value="olympiad">🏆 Olympiads</option>
@@ -233,7 +233,7 @@ export default function EventsPage() {
             {sortedEvents.map((event, index) => (
               <Card
                 key={event.id}
-                className="group border-2 border-gray-200 hover:border-indigo-300 hover:shadow-2xl transition-all duration-300 cursor-pointer animate-in slide-in-from-bottom"
+                className="group border-2 border-gray-200 hover:border-blue-300 hover:shadow-2xl transition-all duration-300 cursor-pointer animate-in slide-in-from-bottom"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <CardContent className="pt-6">
@@ -242,13 +242,13 @@ export default function EventsPage() {
                     <div className={`w-16 h-16 bg-gradient-to-br ${typeColors[event.type]} rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition-transform shadow-lg`}>
                       {typeEmojis[event.type]}
                     </div>
-                    <div className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold capitalize">
+                    <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold capitalize">
                       {event.type}
                     </div>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-black text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                  <h3 className="text-xl font-black text-gray-900 mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">
                     {event.title}
                   </h3>
 
@@ -296,7 +296,7 @@ export default function EventsPage() {
                   </div>
 
                   {/* CTA Button */}
-                  <button className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:shadow-xl">
+                  <button className="w-full py-3 pp-primary-btn rounded-xl font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:shadow-xl">
                     Register →
                   </button>
                 </CardContent>
@@ -306,7 +306,7 @@ export default function EventsPage() {
         )}
 
         {/* CTA SECTION */}
-        <div className="mt-16 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-3xl p-12 text-center text-white shadow-2xl">
+        <div className="mt-16 bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-700 rounded-3xl p-12 text-center text-white shadow-2xl">
           <Calendar className="w-16 h-16 mx-auto mb-6" />
           <h2 className="text-3xl md:text-4xl font-black mb-4">
             Want to Host an Event?
@@ -314,7 +314,7 @@ export default function EventsPage() {
           <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
             Share your competition, project, or volunteering opportunity with the community
           </p>
-          <button className="inline-flex items-center gap-2 bg-white text-indigo-600 px-10 py-4 rounded-2xl text-lg font-black hover:shadow-2xl hover:-translate-y-1 transition-all">
+          <button className="inline-flex items-center gap-2 bg-white text-blue-700 px-10 py-4 rounded-2xl text-lg font-black hover:shadow-2xl hover:-translate-y-1 transition-all">
             <Tag className="w-5 h-5" />
             Post an Event
           </button>

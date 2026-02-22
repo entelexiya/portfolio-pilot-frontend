@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -14,6 +14,10 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showReset, setShowReset] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetMessage, setResetMessage] = useState('')
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -40,11 +44,34 @@ export default function Login() {
     }
   }
 
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setResetMessage('')
+    setError('')
+    setResetLoading(true)
+
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback?next=/reset-password`
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo,
+      })
+
+      if (resetError) throw resetError
+      setResetMessage('Password reset email sent. Check your inbox.')
+    } catch (resetError: unknown) {
+      const message =
+        resetError instanceof Error ? resetError.message : 'Failed to send password reset email'
+      setError(message)
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-50 to-blue-50">
-      <div className="w-full max-w-md bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-slate-200/50">
+    <div className="pp-bg min-h-screen flex items-center justify-center p-4">
+      <div className="pp-panel w-full max-w-md rounded-3xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="pp-title-gradient text-5xl font-black">
             PortfolioPilot
           </h1>
           <p className="text-slate-600 mt-2 text-lg">Sign in to your account</p>
@@ -62,7 +89,7 @@ export default function Login() {
             placeholder="Email" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-5 border-2 border-slate-200 rounded-2xl text-lg focus:ring-4 focus:ring-indigo-200/50 focus:border-indigo-500 transition-all shadow-sm"
+            className="w-full p-5 border-2 border-slate-200 rounded-2xl text-lg focus:ring-4 focus:ring-blue-200/50 focus:border-blue-500 transition-all shadow-sm"
             required 
             disabled={loading}
           />
@@ -72,7 +99,7 @@ export default function Login() {
             placeholder="Password" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-5 border-2 border-slate-200 rounded-2xl text-lg focus:ring-4 focus:ring-indigo-200/50 focus:border-indigo-500 transition-all shadow-sm"
+            className="w-full p-5 border-2 border-slate-200 rounded-2xl text-lg focus:ring-4 focus:ring-blue-200/50 focus:border-blue-500 transition-all shadow-sm"
             required 
             disabled={loading}
           />
@@ -80,14 +107,50 @@ export default function Login() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-6 rounded-2xl text-xl font-black shadow-2xl hover:shadow-3xl hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="pp-primary-btn w-full rounded-2xl py-6 text-xl font-black disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? '⏳ Signing in...' : '🚀 Sign In'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setShowReset((prev) => !prev)
+              setResetMessage('')
+              setError('')
+            }}
+            className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline"
+          >
+            {showReset ? 'Back to login' : 'Forgot password?'}
+          </button>
+        </div>
+
+        {showReset && (
+          <form onSubmit={handleResetPassword} className="mt-5 space-y-3 border-t pt-5">
+            <input
+              type="email"
+              placeholder="Enter your email for password reset"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              className="w-full p-4 border-2 border-slate-200 rounded-2xl text-base focus:ring-4 focus:ring-blue-200/50 focus:border-blue-500 transition-all shadow-sm"
+              required
+              disabled={resetLoading}
+            />
+            <button
+              type="submit"
+              disabled={resetLoading}
+              className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all disabled:opacity-50"
+            >
+              {resetLoading ? 'Sending reset email...' : 'Send reset email'}
+            </button>
+            {resetMessage && <p className="text-sm text-blue-700 text-center">{resetMessage}</p>}
+          </form>
+        )}
         
         <div className="text-center mt-8 space-y-2">
-          <Link href="/register" className="block text-indigo-600 hover:text-indigo-700 font-bold text-lg hover:underline">
+          <Link href="/register" className="block text-blue-700 hover:text-blue-800 font-bold text-lg hover:underline">
             Create an account
           </Link>
           <p className="text-sm text-slate-500">test@example.com / password123</p>
@@ -96,3 +159,4 @@ export default function Login() {
     </div>
   )
 }
+

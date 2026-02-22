@@ -5,25 +5,25 @@
 /* Твои цвета (но по-другому) */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 218 64% 99%;
+    --foreground: 222.2 55% 10%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 222 68% 30%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: 214 62% 96%;
+    --muted-foreground: 218 28% 40%;
+    --accent: 214 70% 95%;
+    --accent-foreground: 222 62% 20%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 214 43% 89%;
+    --input: 214 43% 89%;
+    --ring: 222 68% 36%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -77,4 +77,69 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  .pp-bg {
+    @apply bg-gradient-to-br from-slate-50 via-blue-50/70 to-indigo-100/80;
+  }
+
+  .pp-panel {
+    @apply border border-blue-100/70 bg-white/90 shadow-xl backdrop-blur-xl;
+  }
+
+  .pp-primary-btn {
+    @apply bg-gradient-to-r from-blue-700 to-indigo-700 text-white shadow-xl transition-all hover:-translate-y-0.5 hover:from-blue-800 hover:to-indigo-800 hover:shadow-2xl;
+  }
+
+  .pp-title-gradient {
+    @apply bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-700 bg-clip-text text-transparent;
+  }
+}
+
+@keyframes floatSlow {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.04);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes floatDelay {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, 16px, 0) scale(0.98);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes shimmerText {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 10s ease-in-out infinite;
+}
+
+.animate-float-delay {
+  animation: floatDelay 9s ease-in-out infinite;
+  animation-delay: 0.7s;
+}
+
+.animate-shimmer {
+  background-size: 220% 220%;
+  animation: shimmerText 7s linear infinite alternate;
 }

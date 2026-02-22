@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase-client'
@@ -36,12 +36,9 @@ export default function VerifyPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [comment, setComment] = useState('')
   const [done, setDone] = useState<'approved' | 'rejected' | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
-  useEffect(() => {
-    load()
-  }, [token])
-
-  async function load() {
+  const load = useCallback(async () => {
     if (!token) {
       setError('Invalid link')
       setLoading(false)
@@ -65,7 +62,11 @@ export default function VerifyPage() {
     const { data: { user } } = await supabase.auth.getUser()
     setUserEmail(user?.email?.toLowerCase() ?? null)
     setLoading(false)
-  }
+  }, [token])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const sendMagicLink = async () => {
     if (!data?.request?.verifier_email) return
@@ -80,7 +81,7 @@ export default function VerifyPage() {
       setLinkSent(true)
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to send link'
-      alert(message)
+      setNotice(message)
     } finally {
       setSendingLink(false)
     }
@@ -105,7 +106,7 @@ export default function VerifyPage() {
       setDone(action === 'approve' ? 'approved' : 'rejected')
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Something went wrong'
-      alert(message)
+      setNotice(message)
     } finally {
       setActionLoading(false)
     }
@@ -113,15 +114,15 @@ export default function VerifyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
+      <div className="min-h-screen pp-bg flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-700" />
       </div>
     )
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center p-6">
+      <div className="min-h-screen pp-bg flex items-center justify-center p-6">
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-6">
             <p className="text-lg font-semibold text-gray-800 mb-4">{error}</p>
@@ -136,11 +137,11 @@ export default function VerifyPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center p-6">
+      <div className="min-h-screen pp-bg flex items-center justify-center p-6">
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-6">
             {done === 'approved' ? (
-              <ShieldCheck className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
+              <ShieldCheck className="w-16 h-16 text-blue-600 mx-auto mb-4" />
             ) : (
               <ShieldX className="w-16 h-16 text-red-600 mx-auto mb-4" />
             )}
@@ -164,16 +165,21 @@ export default function VerifyPage() {
   const isVerifierEmail = userEmail === data.request.verifier_email.toLowerCase()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
+    <div className="min-h-screen pp-bg py-12 px-4">
       <div className="max-w-xl mx-auto">
-        <Card className="border-2 border-indigo-100 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+        <Card className="border-2 border-blue-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
             <CardTitle className="text-xl">Verify student achievement</CardTitle>
             <p className="text-gray-600 text-sm mt-1">
               Student <strong>{data.studentName}</strong> asked you to confirm this achievement.
             </p>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
+            {notice && (
+              <p className="text-sm text-red-700 bg-red-50 border border-red-200 p-3 rounded-xl">
+                {notice}
+              </p>
+            )}
             <div>
               <h3 className="font-bold text-gray-800 mb-1">{data.achievement.title}</h3>
               {data.achievement.description && (
@@ -185,9 +191,9 @@ export default function VerifyPage() {
                   href={data.achievement.verification_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-indigo-600 hover:underline block mt-2"
+                  className="text-sm text-blue-700 hover:underline block mt-2"
                 >
-                  View proof / link →
+                  {'View proof / link ->'}
                 </a>
               )}
               {data.achievement.file_url && (
@@ -195,9 +201,9 @@ export default function VerifyPage() {
                   href={data.achievement.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-indigo-600 hover:underline block mt-1"
+                  className="text-sm text-blue-700 hover:underline block mt-1"
                 >
-                  Certificate / file →
+                  {'Certificate / file ->'}
                 </a>
               )}
             </div>
@@ -241,7 +247,7 @@ export default function VerifyPage() {
                   <Button
                     onClick={() => handleRespond('approve')}
                     disabled={actionLoading}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
                   >
                     {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
                   </Button>

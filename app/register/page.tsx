@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -47,6 +47,7 @@ export default function Register() {
             name: formData.name,
             school: formData.school,
             region: 'Turkistan',
+            role: 'student',
             username: formData.username,
             is_public: true,
           })
@@ -67,10 +68,10 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-50 to-blue-50">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8">
+    <div className="pp-bg min-h-screen flex items-center justify-center p-4">
+      <div className="pp-panel w-full max-w-md rounded-3xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-emerald-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="pp-title-gradient text-5xl font-black">
             PortfolioPilot
           </h1>
           <p className="text-slate-600 mt-2 text-lg">Create your account</p>
@@ -83,9 +84,7 @@ export default function Register() {
         )}
 
         {success && (
-          <div className="mb-6 p-4 bg-green-100 border border-green-300 text-green-700 rounded-2xl text-center">
-            ✅ Registration successful! Redirecting...
-          </div>
+          <div className="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-700 rounded-2xl text-center">Registration successful! Redirecting...</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -142,14 +141,14 @@ export default function Register() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-emerald-600 to-indigo-600 text-white py-5 rounded-2xl text-xl font-bold disabled:opacity-50"
+            className="pp-primary-btn w-full rounded-2xl py-5 text-xl font-bold disabled:opacity-50"
           >
-            {loading ? '⏳ Creating...' : '✨ Create Account'}
+            {loading ? 'Creating...' : 'Create Account'}
           </button>
         </form>
 
         <p className="text-center mt-8">
-          <Link href="/login" className="text-indigo-600 font-bold hover:underline">
+          <Link href="/login" className="text-blue-700 font-bold hover:underline">
             Already have an account? Sign in
           </Link>
         </p>
@@ -157,3 +156,4 @@ export default function Register() {
     </div>
   )
 }
+

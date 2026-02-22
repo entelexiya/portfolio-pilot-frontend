@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,12 +9,16 @@ import { Label } from '@/components/ui/label'
 import { supabase, getCurrentUser } from '@/lib/supabase-client'
 import { ArrowLeft, Save, User, Mail, School, Award, Link as LinkIcon } from 'lucide-react'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portfolio-pilot-api.vercel.app'
+
 export default function Settings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
+  const [role, setRole] = useState<'student' | 'verifier' | 'counselor' | 'unknown'>('unknown')
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
   const [formData, setFormData] = useState({
@@ -28,11 +33,7 @@ export default function Settings() {
     about_me: ''
   })
 
-  useEffect(() => {
-    loadProfile()
-  }, [])
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       const user = await getCurrentUser()
       
@@ -54,6 +55,7 @@ export default function Settings() {
 
       if (data) {
         setUsername(data.username || '')
+        setRole((data.role as 'student' | 'verifier' | 'counselor' | null) || 'student')
         setFormData({
           name: data.name || '',
           school: data.school || '',
@@ -66,13 +68,29 @@ export default function Settings() {
           about_me: data.about_me || ''
         })
       }
+
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        const adminCheck = await fetch(`${API_URL}/api/admin/me`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        })
+        setIsAdmin(adminCheck.ok)
+      } else {
+        setIsAdmin(false)
+      }
     } catch (error) {
       console.error('Error loading profile:', error)
       alert('Failed to load profile')
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    void loadProfile()
+  }, [loadProfile])
 
   const handleSave = async () => {
     if (!userId) return
@@ -109,7 +127,7 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen pp-bg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
@@ -119,26 +137,26 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 px-4">
+    <div className="min-h-screen pp-bg py-12 px-4">
       <div className="container mx-auto max-w-4xl">
         {/* HEADER */}
         <div className="mb-8">
           <button
             onClick={() => router.push('/dashboard')}
-            className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold mb-4 transition-colors"
+            className="inline-flex items-center gap-2 text-blue-700 hover:text-blue-800 font-semibold mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
-          <h1 className="text-5xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-5xl font-black pp-title-gradient mb-3">
             Profile Settings
           </h1>
           <p className="text-gray-600 text-lg">Update your personal information and academic records</p>
         </div>
 
         {/* ACCOUNT INFO (READ-ONLY) */}
-        <Card className="mb-6 border-2 border-indigo-100 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
+        <Card className="mb-6 border-2 border-blue-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
               Account Information
@@ -161,14 +179,14 @@ export default function Settings() {
                 <span className="text-gray-700">@{username}</span>
                 <span className="ml-auto text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">Read-only</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Your public profile: <a href={`/profile/${username}`} target="_blank" className="text-indigo-600 hover:underline">portfolio-pilot.vercel.app/profile/{username}</a></p>
+              <p className="text-xs text-gray-500 mt-1">Your public profile: <a href={`/profile/${username}`} target="_blank" className="text-blue-700 hover:underline">portfolio-pilot.vercel.app/profile/{username}</a></p>
             </div>
           </CardContent>
         </Card>
 
         {/* PERSONAL INFO */}
-        <Card className="mb-6 border-2 border-purple-100 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+        <Card className="mb-6 border-2 border-indigo-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
             <CardTitle className="flex items-center gap-2">
               <School className="w-5 h-5" />
               Personal Information
@@ -215,9 +233,47 @@ export default function Settings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* ROLE */}
+        <Card className="mb-6 border-2 border-blue-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Role
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <Label>Account role</Label>
+            <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
+              <span className="font-semibold text-gray-800 capitalize">{role}</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Role is managed by system/admin policy.
+            </p>
+          </CardContent>
+        </Card>
+
+        {isAdmin && (
+          <Card className="mb-6 border-2 border-slate-200 shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-100">
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Admin Tools
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="text-sm text-gray-600 mb-3">
+                Role and moderation management is available in admin panel.
+              </p>
+              <Link href="/admin/roles">
+                <Button variant="outline">Open Admin Panel</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
            {/* ABOUT ME */}
-        <Card className="mb-6 border-2 border-pink-100 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-pink-50 to-purple-50">
+        <Card className="mb-6 border-2 border-blue-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
               About Me
@@ -236,7 +292,7 @@ export default function Settings() {
                 placeholder="I'm passionate about computer science and solving real-world problems through technology..."
                 rows={8}
                 maxLength={2000}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-pink-200 focus:border-pink-500 transition-all resize-none"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all resize-none"
               />
               <p className="text-xs text-gray-400 mt-1">
                 {(formData.about_me || '').length} / 2000 characters
@@ -245,8 +301,8 @@ export default function Settings() {
           </CardContent>
         </Card>
         {/* ACADEMIC METRICS */}
-        <Card className="mb-6 border-2 border-emerald-100 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50">
+        <Card className="mb-6 border-2 border-blue-100 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
             <CardTitle className="flex items-center gap-2">
               <Award className="w-5 h-5" />
               Academic Metrics
@@ -317,7 +373,7 @@ export default function Settings() {
 
         {/* LINKS */}
         <Card className="mb-8 border-2 border-blue-100 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50">
             <CardTitle className="flex items-center gap-2">
               <LinkIcon className="w-5 h-5" />
               Social Links
@@ -342,7 +398,7 @@ export default function Settings() {
         <div className="flex gap-4">
           <Button
             onClick={handleSave}
-            className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-lg py-6 shadow-xl"
+            className="flex-1 bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-lg py-6 shadow-xl"
             disabled={saving}
           >
             {saving ? (
@@ -369,3 +425,4 @@ export default function Settings() {
     </div>
   )
 }
+
