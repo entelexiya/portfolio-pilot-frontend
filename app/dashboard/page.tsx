@@ -1,11 +1,11 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PlusCircle, Edit, Trash2, ShieldCheck, ShieldQuestion, Loader2 } from 'lucide-react'
+import { PlusCircle, Edit, Trash2, ShieldCheck, ShieldQuestion, Loader2, Sparkles } from 'lucide-react'
 import { supabase, getCurrentUser } from '@/lib/supabase-client'
 import { Globe, ArrowRight } from 'lucide-react'
 
@@ -31,6 +31,23 @@ interface Achievement {
   updated_at: string
 }
 
+type AiAdvisorData = {
+  portfolio_score: number
+  profile_summary: string
+  suggested_majors: string[]
+  strengths: string[]
+  gaps: string[]
+  action_plan: string[]
+}
+
+type AchievementForm = {
+  title: string
+  description: string
+  category: Achievement["category"]
+  type: Achievement["type"]
+  date: string
+}
+
 const typeLabels: Record<string, string> = {
   // Awards
   olympiad: "🏆 Olympiad",
@@ -46,6 +63,137 @@ const typeLabels: Record<string, string> = {
   activity_other: "📌 Other Activity"
 }
 
+function buildAiDescription(form: AchievementForm): string {
+  const title = form.title.trim()
+  const base = form.description.trim()
+  const type = form.type.replace('_', ' ')
+
+  if (base.length >= 90) return base
+
+  if (form.category === 'award') {
+    return `${title}. Competed in ${type} and achieved strong results against regional peers. Built advanced problem-solving skills and consistent performance under pressure.`
+  }
+
+  return `${title}. Led execution in ${type}, coordinated deliverables, and shipped measurable outcomes for the team/community. Strengthened initiative, ownership, and collaboration skills.`
+}
+
+function analyzeAchievementQuality(form: AchievementForm): { score: number; tips: string[]; aiDescription: string } {
+  const tips: string[] = []
+  const title = form.title.trim()
+  const description = form.description.trim()
+  const fullText = `${title} ${description}`.toLowerCase()
+
+  if (!title && !description) {
+    return { score: 0, tips: [], aiDescription: '' }
+  }
+
+  let score = 0
+
+  if (title.length >= 8) score += 20
+  else tips.push('Make the title more specific (event/project + result).')
+
+  if (description.length >= 60) score += 25
+  else tips.push('Add more context: what you did, where, and why it mattered.')
+
+  if (/\b(\d+|%|hours|students|participants|users|teams|rank|place|top)\b/i.test(fullText)) score += 20
+  else tips.push('Add measurable impact: numbers, rank, participants, or hours.')
+
+  if (/\b(led|built|organized|won|ranked|launched|published|implemented|managed)\b/i.test(fullText)) score += 20
+  else tips.push('Use strong action verbs: led, built, organized, won, launched.')
+
+  if (form.date) score += 5
+  else tips.push('Set an exact date to make the record more credible.')
+
+  const aiDescription = buildAiDescription(form)
+  score = Math.min(100, score)
+
+  if (tips.length === 0 && score >= 85) {
+    tips.push('Great quality. This is ready for verification and sharing.')
+  }
+
+  return { score, tips, aiDescription }
+}
+
+function recommendMajors(achievements: Achievement[], gpa?: number | null, sat?: number | null): string[] {
+  const text = achievements.map((a) => `${a.type} ${a.title} ${a.description || ''}`).join(' ').toLowerCase()
+  const has = (pattern: RegExp) => pattern.test(text)
+
+  const majors: string[] = []
+  if (has(/\b(code|hackathon|project|software|algorithm|programming|ai|ml|research)\b/)) {
+    majors.push('Computer Science')
+  }
+  if (has(/\b(research|biology|chemistry|physics|lab|science|olympiad)\b/)) {
+    majors.push('Data Science / STEM Research')
+  }
+  if (has(/\b(leadership|club|volunteer|community|organi[sz]ed|managed)\b/)) {
+    majors.push('Business / Management')
+  }
+  if (has(/\b(volunteer|social|community|ngo|impact|mentor)\b/)) {
+    majors.push('Public Policy / Social Sciences')
+  }
+  if (has(/\b(design|media|content|marketing|brand)\b/)) {
+    majors.push('Design / Communications')
+  }
+
+  if (majors.length === 0) {
+    majors.push('Undeclared (Explore 2-3 tracks)')
+  }
+
+  if ((gpa || 0) >= 3.7 || (sat || 0) >= 1450) {
+    majors.unshift('Highly Selective Programs Track')
+  }
+
+  return majors.slice(0, 4)
+}
+
+function portfolioActionPlan(params: {
+  achievements: Achievement[]
+  verifiedCount: number
+  goalMajor: string
+  gpa?: number | null
+  sat?: number | null
+}): string[] {
+  const { achievements, verifiedCount, goalMajor, gpa, sat } = params
+  const goal = goalMajor.trim().toLowerCase()
+  const actions: string[] = []
+  const text = achievements.map((a) => `${a.type} ${a.title} ${a.description || ''}`).join(' ').toLowerCase()
+
+  if (achievements.length < 6) {
+    actions.push('Increase total achievements to at least 6-8 with clear outcomes.')
+  }
+  if (verifiedCount < 2) {
+    actions.push('Get at least 2 achievements verified by teacher/mentor to increase trust.')
+  }
+  if ((gpa || 0) > 0 && (gpa || 0) < 3.6) {
+    actions.push('Raise GPA trend and document academic improvement semester-by-semester.')
+  }
+  if ((sat || 0) > 0 && (sat || 0) < 1400) {
+    actions.push('Retake SAT with a target of 1450+ for stronger competitiveness.')
+  }
+
+  if (goal.includes('ai') || goal.includes('computer') || goal.includes('cs') || goal.includes('ml')) {
+    if (!/\b(hackathon|project|ai|ml|programming|research)\b/.test(text)) {
+      actions.push('Build 2 technical projects (one AI/ML), publish code, and join at least 1 hackathon.')
+    } else {
+      actions.push('Deepen AI track: add one research-style project and one competition result.')
+    }
+  }
+
+  if (goal.includes('business') || goal.includes('management') || goal.includes('economics')) {
+    actions.push('Show leadership + impact metrics: team size, revenue/users reached, partnerships.')
+  }
+
+  if (goal.includes('medicine') || goal.includes('bio')) {
+    actions.push('Add science research, olympiad/lab exposure, and sustained community health volunteering.')
+  }
+
+  if (actions.length === 0) {
+    actions.push('Keep building depth in one track and add measurable impact in every new activity.')
+  }
+
+  return actions.slice(0, 5)
+}
+
 export default function Dashboard() {
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,6 +202,8 @@ export default function Dashboard() {
   const [userId, setUserId] = useState<string | null>(null)
   const [username, setUsername] = useState<string | null>(null)
   const [isPublic, setIsPublic] = useState(true)
+  const [gpa, setGpa] = useState<number | null>(null)
+  const [satScore, setSatScore] = useState<number | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<"awards" | "activities">("activities")
@@ -63,6 +213,14 @@ export default function Dashboard() {
   const [verificationMessage, setVerificationMessage] = useState('')
   const [verificationSending, setVerificationSending] = useState(false)
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiScore, setAiScore] = useState<number | null>(null)
+  const [aiTips, setAiTips] = useState<string[]>([])
+  const [aiPreview, setAiPreview] = useState('')
+  const [goalMajor, setGoalMajor] = useState('')
+  const [advisorLoading, setAdvisorLoading] = useState(false)
+  const [advisorError, setAdvisorError] = useState<string | null>(null)
+  const [advisorData, setAdvisorData] = useState<AiAdvisorData | null>(null)
   const router = useRouter()
 
   const getAuthHeaders = useCallback(async (withJson = true) => {
@@ -78,13 +236,85 @@ export default function Dashboard() {
     }
   }, [])
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AchievementForm>({
     title: "",
     description: "",
     category: "activity" as Achievement["category"],
     type: "project" as Achievement["type"],
     date: "",
   })
+
+  const verifiedCount = useMemo(
+    () => achievements.filter((a) => (a.verification_status || 'unverified') === 'verified').length,
+    [achievements]
+  )
+
+  const majorSuggestions = useMemo(
+    () => recommendMajors(achievements, gpa, satScore),
+    [achievements, gpa, satScore]
+  )
+
+  const advisorPlan = useMemo(
+    () => portfolioActionPlan({ achievements, verifiedCount, goalMajor, gpa, sat: satScore }),
+    [achievements, gpa, goalMajor, satScore, verifiedCount]
+  )
+
+const runAiCoach = async () => {
+  setAiBusy(true)
+  try {
+    const result = analyzeAchievementQuality(formData)
+    setAiScore(result.score)
+    setAiTips(result.tips)
+    setAiPreview(result.aiDescription)
+  } finally {
+    setAiBusy(false)
+  }
+}
+
+const fetchAiAdvisor = async () => {
+  if (!userId) return
+
+  try {
+    setAdvisorLoading(true)
+    setAdvisorError(null)
+
+    const headers = await getAuthHeaders()
+    const res = await fetch(`${API_URL}/api/ai/advisor`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        achievements: achievements.map((a) => ({
+          title: a.title,
+          description: a.description,
+          category: a.category,
+          type: a.type,
+          verification_status: a.verification_status || 'unverified',
+        })),
+        goalMajor: goalMajor.trim() || undefined,
+        gpa,
+        satScore,
+      }),
+    })
+
+    const text = await res.text()
+    const payload = text ? (() => { try { return JSON.parse(text) } catch { return {} } })() : {}
+    if (!res.ok || !payload.success) {
+      throw new Error(payload.error || `AI advisor failed (${res.status})`)
+    }
+    setAdvisorData(payload.data as AiAdvisorData)
+  } catch (e: unknown) {
+    setAdvisorError(e instanceof Error ? e.message : 'Failed to load AI advisor')
+  } finally {
+    setAdvisorLoading(false)
+  }
+}
+
+  useEffect(() => {
+    const result = analyzeAchievementQuality(formData)
+    setAiScore(result.score)
+    setAiTips(result.tips)
+    setAiPreview(result.aiDescription)
+  }, [formData])
 
 const fetchAchievements = useCallback(async (uid: string) => {
   try {
@@ -116,13 +346,15 @@ const checkUser = useCallback(async () => {
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username, is_public')
+    .select('username, is_public, gpa, sat_score')
     .eq('id', user.id)
     .single()
 
   if (profile) {
     setUsername(profile.username)
     setIsPublic(profile.is_public ?? true)
+    setGpa(profile.gpa ?? null)
+    setSatScore(profile.sat_score ?? null)
   }
   
   await fetchAchievements(user.id)
@@ -380,6 +612,9 @@ const startEdit = (achievement: Achievement) => {
   })
   setEditingId(achievement.id)
   setIsAdding(true)
+  setAiScore(null)
+  setAiTips([])
+  setAiPreview('')
 }
 
 const resetForm = () => {
@@ -390,6 +625,9 @@ const resetForm = () => {
     type: "project",
     date: "",
   })
+  setAiScore(null)
+  setAiTips([])
+  setAiPreview('')
 }
 
 // Filter by category
@@ -661,6 +899,150 @@ return (
           </button>
         </div>
       </div>
+
+      <Card className="mb-8 border-2 border-blue-200 shadow-xl">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardTitle className="text-2xl font-black flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-blue-700" />
+            Portfolio AI Advisor
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6 space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-gray-600">LLM-powered portfolio analysis and major-fit guidance.</p>
+            <Button
+              type="button"
+              onClick={() => void fetchAiAdvisor()}
+              disabled={advisorLoading || achievements.length === 0}
+              className="bg-blue-700 hover:bg-blue-800"
+            >
+              {advisorLoading ? 'Analyzing portfolio...' : 'Refresh AI Advisor'}
+            </Button>
+          </div>
+
+          {advisorError && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {advisorError}. Showing local advisor fallback.
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4">
+              <p className="text-xs text-gray-600">Total achievements</p>
+              <p className="text-2xl font-black text-blue-800">{achievements.length}</p>
+            </div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4">
+              <p className="text-xs text-gray-600">Verified</p>
+              <p className="text-2xl font-black text-blue-800">{verifiedCount}</p>
+            </div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4">
+              <p className="text-xs text-gray-600">Portfolio score</p>
+              <p className="text-2xl font-black text-blue-800">
+                {advisorData ? advisorData.portfolio_score : Math.min(100, 25 + achievements.length * 8 + verifiedCount * 10)}
+              </p>
+            </div>
+          </div>
+
+          {advisorData?.profile_summary && (
+            <div className="rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm text-gray-700">
+              {advisorData.profile_summary}
+            </div>
+          )}
+
+          <div>
+            <p className="text-sm font-bold text-gray-700 mb-2">Suggested major tracks</p>
+            <div className="flex flex-wrap gap-2">
+              {(advisorData?.suggested_majors?.length ? advisorData.suggested_majors : majorSuggestions).map((major) => (
+                <span key={major} className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm">
+                  {major}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-base font-bold text-gray-700">Your target major</Label>
+            <Input
+              value={goalMajor}
+              onChange={(e) => setGoalMajor(e.target.value)}
+              placeholder="e.g. AI, Computer Science, Business, Medicine"
+              className="mt-2 h-11 border-2 focus:ring-4 focus:ring-blue-200"
+            />
+          </div>
+
+          <div>
+            <p className="text-sm font-bold text-gray-700 mb-2">Action plan from AI advisor</p>
+            <ul className="space-y-2 text-sm text-gray-700">
+              {(advisorData?.action_plan?.length ? advisorData.action_plan : advisorPlan).map((item, idx) => (
+                <li key={`${item}-${idx}`} className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2">
+                  {idx + 1}. {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {(advisorData?.strengths?.length || advisorData?.gaps?.length) && (
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-3">
+                <p className="text-sm font-bold text-blue-900 mb-2">Strengths</p>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {(advisorData?.strengths || []).map((s, idx) => (
+                    <li key={`${s}-${idx}`}>- {s}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3">
+                <p className="text-sm font-bold text-amber-900 mb-2">Gaps to close</p>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {(advisorData?.gaps || []).map((g, idx) => (
+                    <li key={`${g}-${idx}`}>- {g}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {isAdding && (
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-bold text-indigo-900">Current draft quality</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void runAiCoach()}
+                  disabled={aiBusy}
+                  className="border-blue-300 text-blue-800 hover:bg-blue-100"
+                >
+                  {aiBusy ? 'Analyzing...' : 'Refresh draft advice'}
+                </Button>
+              </div>
+              <p className="text-sm text-gray-700">
+                Score: <span className="font-black text-indigo-800">{aiScore ?? 0}/100</span>
+              </p>
+              {aiTips.length > 0 && (
+                <ul className="text-sm text-gray-700 space-y-1">
+                  {aiTips.map((tip, i) => (
+                    <li key={`${tip}-${i}`}>- {tip}</li>
+                  ))}
+                </ul>
+              )}
+              {aiPreview && (
+                <div className="rounded-lg border border-indigo-200 bg-white p-3">
+                  <p className="text-xs font-bold text-indigo-700 mb-1">Suggested description</p>
+                  <p className="text-sm text-gray-700 mb-2">{aiPreview}</p>
+                  <Button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, description: aiPreview })}
+                    className="bg-blue-700 hover:bg-blue-800"
+                  >
+                    Use This Description
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ACHIEVEMENTS GRID */}
       <div className="grid gap-6">
